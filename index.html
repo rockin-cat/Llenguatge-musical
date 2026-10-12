@@ -314,7 +314,7 @@ select{border:1.5px solid var(--line);background:var(--surface);border-radius:8p
 .s3head h1{margin:0;font-size:clamp(1.5rem,4vw,2.3rem);letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.6)}
 .s3head p{margin:2px 0 0;font-family:var(--f-text);color:#cfc8ba}
 .s3labels{position:absolute;inset:0;pointer-events:none;z-index:1}
-.s3l{position:absolute;left:0;top:0;pointer-events:auto;border:1.5px solid rgba(255,255,255,.25);background:rgba(18,16,14,.72);color:#f3efe6;border-radius:10px;padding:5px 10px;display:grid;justify-items:center;gap:0;backdrop-filter:blur(4px);transition:background .15s,border-color .15s,transform .05s;white-space:nowrap}
+.s3l{position:absolute;left:0;top:0;pointer-events:auto;border:1.5px solid rgba(255,255,255,.25);background:rgba(18,16,14,.72);color:#f3efe6;border-radius:8px;padding:4px 9px;display:flex;align-items:baseline;gap:7px;backdrop-filter:blur(4px);transition:background .15s,border-color .15s,transform .05s;white-space:nowrap}
 .s3l b{font-size:.95rem}
 .s3l span{font-size:.72rem;opacity:.8;font-family:var(--f-mono)}
 .s3l.on,.s3l:hover{background:#FFC012;color:#1B1B19;border-color:#FFC012}
@@ -1457,7 +1457,7 @@ function buildStage(host,onPick,info){
   cv.addEventListener('click',e=>{const g=pickAt(e);if(g)onPick(g)});
   const v=new T.Vector3();
   const frame=()=>{raf=requestAnimationFrame(frame);const t=(performance.now()-t0)/1000;
-    const sway=reduce?0:Math.sin(t*.12)*.5;const fit=Math.max(1,1.75/(W()/H()));cam.position.set(sway+ptr.x*1.2,3.7*fit-ptr.y*.5,10.8*fit);cam.lookAt(0,1.15,-.8);
+    const sway=reduce?0:Math.sin(t*.12)*.5;const fit=Math.pow(Math.max(1,1.7/(W()/H())),.55);cam.position.set(sway+ptr.x*1.2,3.7*fit-ptr.y*.5,10.8*fit);cam.lookAt(0,1.15,-.8);
     Object.entries(groups).forEach(([gid,gr])=>{const on=hover===gid,s=spots[gid];s.intensity+=((on?3.4:hover?.75:1.35)-s.intensity)*.15;
       v.set(gr.obj.position.x,0,gr.obj.position.z+(gid==='bateria'?1.9:.75)).project(cam);const lw=gr.el.offsetWidth/2+8,lx=Math.min(W()-lw,Math.max(lw,(v.x*.5+.5)*W()));gr.el.style.transform=`translate(${lx}px,${(-v.y*.5+.5)*H()}px) translate(-50%,-30%)`;gr.el.classList.toggle('on',on)});
     renderer.render(scene,cam)};
@@ -1466,7 +1466,7 @@ function buildStage(host,onPick,info){
   return()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',rs);renderer.dispose();scene.traverse(o=>{if(o.geometry)o.geometry.dispose()})};
 }
 function renderHome(){
-  const info=gid=>{const tot=FLAT[gid].length,d=FLAT[gid].filter(n=>P.done(gid,n.id)).length;return `${GAMES[gid].sub} · ${d}/${tot}`};
+  const info=gid=>{const tot=FLAT[gid].length,d=FLAT[gid].filter(n=>P.done(gid,n.id)).length;return `${d}/${tot}`};
   const sc=screen(`<div class="home"><div class="stage3d"><div class="s3head"><h1>Tria amb què toques</h1><p>Clica un instrument de l'escenari.</p></div></div>
     <div class="tiles">${Object.entries(GAMES).map(([id,g])=>{const tot=FLAT[id].length,d=FLAT[id].filter(n=>P.done(id,n.id)).length;
       return `<button class="tile" data-g="${id}" style="--g:${g.col}"><span class="ticon">${ICONS[g.icon]}</span><span class="tname">${g.nom}</span><span class="tsub">${g.sub}</span><span class="tprog"><i style="width:${d/tot*100}%"></i></span><span class="tcount">${d}/${tot}</span></button>`}).join('')}</div>
