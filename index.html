@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Llenguatge musical Rockin</title>
+<meta name="description" content="Llenguatge musical aplicat als instruments de Rockin: guitarra, baix, bateria, teclat i dictat rítmic amb les cartes.">
+<link rel="icon" type="image/png" href="marca/favicon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: barra groga Rockin fixa; a sota, una pantalla cada vegada (inici → repertori de temes → escolta / aprèn / repte / toca amb la banda), columna de màx. 960px */
+:root{
+  --paper:#F2F2EF; --surface:#FFFFFF; --sunk:#EAEAE6; --ink:#1B1B19; --muted:#63625C; --line:#DAD9D3;
+  --yellow:#FFC012; --on-yellow:#1B1B19;
+  --ok:#1E7D46; --ok-bg:#DDF0E4; --bad:#BF3A2F; --bad-bg:#F7DEDA; --hint:#2B57D1;
+  --i8:#1B1B19; --i5:#2B57D1; --i4:#0B8278; --i3M:#C9480F; --i3m:#8E36A8;
+  --hd:#2B57D1; --he:#C4400B;
+  --wkey:#FFFFFF; --wkey-ink:#1B1B19; --bkey:#1E1D1A; --keyline:#B5B3AA;
+  --g-gtr:#E8A800; --g-bass:#1FA597; --g-drum:#E2476F; --g-keys:#2E95D3; --g-dict:#8A63D2;
+  --f-ui:'Ubuntu','Trebuchet MS',system-ui,sans-serif;
+  --f-text:'Lora',Georgia,'Times New Roman',serif;
+  --f-mono:'Ubuntu Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131312; --surface:#1C1C1A; --sunk:#242422; --ink:#ECEBE6; --muted:#A2A098; --line:#33322E;
+    --ok:#4CC47F; --ok-bg:#163423; --bad:#FF6F62; --bad-bg:#41201C; --hint:#86A3FF;
+    --i8:#ECEBE6; --i5:#86A3FF; --i4:#3CC8BA; --i3M:#FF8B4F; --i3m:#D47EEC;
+    --hd:#86A3FF; --he:#FF8B4F;
+    --wkey:#E8E5DC; --bkey:#0B0B0A; --keyline:#57544D;
+    --g-gtr:#FFC012; --g-bass:#2EC4B6; --g-drum:#FF5C8A; --g-keys:#4CB4F2; --g-dict:#A783EE;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131312; --surface:#1C1C1A; --sunk:#242422; --ink:#ECEBE6; --muted:#A2A098; --line:#33322E;
+  --ok:#4CC47F; --ok-bg:#163423; --bad:#FF6F62; --bad-bg:#41201C; --hint:#86A3FF;
+  --i8:#ECEBE6; --i5:#86A3FF; --i4:#3CC8BA; --i3M:#FF8B4F; --i3m:#D47EEC;
+  --hd:#86A3FF; --he:#FF8B4F;
+  --wkey:#E8E5DC; --bkey:#0B0B0A; --keyline:#57544D;
+  --g-gtr:#FFC012; --g-bass:#2EC4B6; --g-drum:#FF5C8A; --g-keys:#4CB4F2; --g-dict:#A783EE;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--hint);outline-offset:2px}
+
+.bar{background:var(--yellow);color:var(--on-yellow);position:sticky;top:env(safe-area-inset-top,0px);z-index:30}
+.bar-in{max-width:960px;margin:0 auto;padding:9px 16px;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;color:inherit;min-width:0;border:0;background:none;padding:0}
+.logo-img{height:1.45rem;width:auto;display:block;filter:brightness(0)}
+.sub{font-family:var(--f-text);font-style:italic;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snd{margin-left:auto;border:1.5px solid var(--on-yellow);background:transparent;color:var(--on-yellow);border-radius:8px;padding:3px 10px;font-weight:500;font-size:.85rem;white-space:nowrap}
+.snd[aria-pressed="false"]{opacity:.55;text-decoration:line-through}
+
+#app{max-width:960px;margin:0 auto;padding-inline:16px;padding-block:24px 60px}
+.screen{animation:enter .22s ease both}
+@keyframes enter{from{opacity:.001;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.btn{border:1.5px solid var(--ink);border-radius:10px;padding:9px 16px;font-weight:500;font-size:.95rem;background:var(--ink);color:var(--paper);transition:transform .06s,opacity .15s}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.acc{background:var(--yellow);color:var(--on-yellow);border-color:var(--yellow)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover:not(:disabled){border-color:var(--ink)}
+.btn.big{font-size:1.05rem;padding:12px 24px;font-weight:700}
+.btn.sm{padding:5px 10px;font-size:.85rem}
+.btn.right{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.wrong{background:var(--bad);border-color:var(--bad);color:#fff;animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+@keyframes pop{0%{transform:scale(.85)}70%{transform:scale(1.05)}100%{transform:scale(1)}}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tog{display:flex;gap:7px;align-items:center;font-size:.9rem}
+.tog input{accent-color:var(--ink);width:16px;height:16px}
+select{border:1.5px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px}
+
+/* inici */
+.home h1{font-size:clamp(1.8rem,4.6vw,2.6rem);margin:4px 0 6px;letter-spacing:-.02em;text-wrap:balance}
+.lead{font-family:var(--f-text);font-size:1.05rem;color:var(--muted);margin:0 0 24px;max-width:62ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.tile{border:1.5px solid var(--line);border-radius:14px;background:var(--surface);padding:16px;text-align:left;display:grid;gap:3px;align-content:start;transition:border-color .15s,transform .15s}
+.tile:hover{border-color:var(--ink);transform:translateY(-2px)}
+.ticon{width:46px;height:46px;border-radius:10px;background:var(--g);color:#1B1B19;padding:7px;margin-bottom:8px;display:block}
+.ticon svg{width:100%;height:100%;display:block}
+.tname{font-size:1.25rem;font-weight:700}
+.tsub{font-family:var(--f-text);color:var(--muted);font-size:.95rem}
+.tprog{height:4px;border-radius:2px;background:var(--sunk);overflow:hidden;margin-top:12px}
+.tprog i{display:block;height:100%;background:var(--g)}
+.tcount{font-size:.78rem;color:var(--muted);font-family:var(--f-mono)}
+.teacher{margin-top:26px;color:var(--muted)}
+
+/* repertori */
+.maphead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.maphead .ticon{margin:0}
+.maphead h1{margin:0;font-size:clamp(1.5rem,4vw,2rem);letter-spacing:-.01em}
+.maphead p{margin:0;color:var(--muted);font-family:var(--f-text)}
+.maphead .grow{flex:1;min-width:0}
+.back{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-size:1.1rem;display:grid;place-items:center;flex:none}
+.back:hover{border-color:var(--ink)}
+.tema{border:1.5px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:16px;overflow:hidden}
+.tema-h{padding:14px 16px 12px;display:grid;gap:2px;border-bottom:1.5px solid var(--line)}
+.tema-k{font-family:var(--f-mono);font-size:.78rem;color:var(--muted);letter-spacing:.04em}
+.tema-n{font-size:1.2rem;font-weight:700}
+.tema-c{font-family:var(--f-text);color:var(--muted);font-size:.95rem;max-width:70ch}
+.prog{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.prog span{font-family:var(--f-mono);font-weight:700;font-size:.85rem;border:1.5px solid var(--line);border-radius:6px;padding:2px 8px;transition:background .1s}
+.prog span.on{background:var(--g);border-color:var(--g);color:#1B1B19}
+.prog span.done{border-color:var(--ok);color:var(--ok)}
+.trk{display:grid;grid-template-columns:2.4rem minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:11px 16px;border:0;border-top:1px solid var(--line);background:transparent;text-align:left}
+.trk:first-of-type{border-top:0}
+.trk:hover:not(.locked){background:var(--sunk)}
+.trk .num{font-family:var(--f-mono);color:var(--muted);font-size:.9rem}
+.trk .tt{font-weight:500;min-width:0}
+.trk .ty{display:block;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:500}
+.trk .st{font-family:var(--f-mono);font-size:.85rem;color:var(--muted);white-space:nowrap}
+.trk .st .ck{color:var(--ok);font-weight:700}
+.trk .st .nx{background:var(--ink);color:var(--paper);border-radius:6px;padding:2px 8px;font-family:var(--f-ui);font-size:.78rem;font-weight:700}
+.trk.locked{opacity:.45;cursor:not-allowed}
+.trk.cur .num{color:var(--ink);font-weight:700}
+.stars{letter-spacing:1px}
+.stars b{color:var(--g-gtr);font-weight:400}
+
+/* HUD i escenari */
+.hud{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.htitle{font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+.pips{flex:1;display:flex;gap:4px;min-width:0}
+.pip{flex:1;height:6px;border-radius:3px;background:var(--line);transition:background .25s}
+.pip.cur{background:var(--muted)}
+.pip.net,.pip.done{background:var(--ok)} .pip.aj{background:#D9A100} .pip.no{background:var(--bad)}
+.stage{--g:var(--g-gtr);background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:20px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px;position:relative}
+.stage>*,.larea>*,.fbx,.kbx{min-width:0}
+.stage h2{margin:0;font-size:clamp(1.3rem,3.4vw,1.7rem);letter-spacing:-.01em;text-wrap:balance}
+.ltext{margin:0;font-family:var(--f-text);font-size:1.06rem;max-width:64ch}
+.ltext b{font-family:var(--f-ui)}
+.say{margin:0;min-height:1.5em;font-family:var(--f-text);font-size:1.03rem;max-width:72ch}
+.say.ok{color:var(--ok);animation:pop .25s} .say.bad{color:var(--bad)} .say.hint{color:var(--hint)}
+.say b{font-family:var(--f-ui)}
+.lfoot{display:flex;justify-content:flex-end}
+.kicker{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);letter-spacing:.04em}
+.prompt{font-size:clamp(1.25rem,3.4vw,1.7rem);font-weight:500;text-wrap:balance}
+.prompt b{font-weight:700;box-shadow:inset 0 -.35em 0 color-mix(in srgb,var(--g) 45%,transparent)}
+.subq{color:var(--muted);font-size:.92rem}
+.splash{display:grid;justify-items:start;gap:12px;padding:6px 0}
+.splash h2{font-size:clamp(1.6rem,4.6vw,2.2rem)}
+.splash p{font-family:var(--f-text);font-size:1.05rem;max-width:58ch;margin:0}
+.tip{border-left:3px solid var(--g);padding:4px 0 4px 12px;font-family:var(--f-text);max-width:60ch}
+.needs{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-family:var(--f-text)}
+.needs li{display:grid;grid-template-columns:2rem minmax(0,1fr);align-items:baseline}
+.needs li::before{content:attr(data-n);font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.tempo{display:flex;align-items:center;gap:10px}
+.bpm{font-family:var(--f-mono);font-size:1.15rem;font-weight:700;min-width:5.5ch;font-variant-numeric:tabular-nums;text-align:center}
+.result{display:grid;gap:10px;justify-items:start}
+.bignum{font-family:var(--f-mono);font-size:clamp(3rem,10vw,4.6rem);font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.meter{display:flex;gap:4px}
+.meter i{width:46px;height:8px;border-radius:4px;background:var(--line)}
+.meter i.on{background:var(--g)}
+.overlay{position:absolute;inset:0;border-radius:13px;background:color-mix(in srgb,var(--surface) 92%,transparent);display:grid;place-items:center;z-index:20;text-align:center}
+.overlay .big{font-size:clamp(2rem,7vw,3.2rem);font-weight:700;animation:pop .3s}
+.timebar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.timebar i{display:block;height:100%;width:100%;background:var(--g);transform-origin:left}
+.timebar.low i{background:var(--bad)}
+.formula{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:1.1rem}
+.formula .fn{background:var(--ink);color:var(--paper);border-radius:8px;padding:4px 11px;font-weight:700}
+.formula .ar{font-family:var(--f-mono);font-weight:700;color:var(--hint);font-size:1.2rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:transparent;border-radius:8px;padding:4px 10px;font-size:.88rem}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.row label{display:flex;gap:6px;align-items:center;font-size:.9rem}
+.slots{display:flex;gap:8px;flex-wrap:wrap}
+.slot{min-width:3.6rem;border:1.5px dashed var(--line);border-radius:10px;padding:6px 10px;display:grid;justify-items:center;gap:1px}
+.slot b{font-family:var(--f-mono);font-size:1.15rem}
+.slot i{font-style:normal;font-size:.78rem;color:var(--muted);min-height:1.1em}
+.slot.cur{border-style:solid;border-color:var(--ink)}
+.slot.done{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
+.slot.done i{color:var(--ok);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted)}
+.legend b{font-family:var(--f-mono);color:var(--ink)}
+
+/* pal */
+.fbwrap{overflow-x:auto;padding:4px 0 2px}
+.fb{display:grid;--row:2.2rem;min-width:36rem;position:relative}
+.fb.bass{--row:2.55rem}
+.wood{background:linear-gradient(180deg,#3d2416 0%,#563420 18%,#4b2c1a 50%,#5a3722 82%,#3d2416 100%);border-radius:2px;box-shadow:inset 0 2px 5px rgba(0,0,0,.5),0 3px 0 #2a180e;z-index:0}
+.inlay{display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:1;pointer-events:none}
+.inlay.dbl{justify-content:space-evenly}
+.inlay i{width:.85rem;height:.85rem;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffdf6 0,#e9e2d0 55%,#bfb59d 100%);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.slab{display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted);padding-right:4px;white-space:nowrap}
+.slab b{display:inline-grid;place-items:center;width:1.15rem;height:1.15rem;border-radius:50%;border:1.5px solid var(--muted);font-size:.66rem;font-weight:700}
+.cell{position:relative;border:0;padding:0;background:transparent;z-index:2;border-right:3px solid #d6d6cf;box-shadow:inset -1px 0 0 rgba(0,0,0,.35);height:var(--row)}
+.cell.open{border-right:9px solid #efe6cc;box-shadow:inset -1px 0 0 rgba(0,0,0,.15)}
+.cell::before{content:"";position:absolute;left:0;right:0;top:50%;height:var(--th,1.5px);transform:translateY(-50%);background:linear-gradient(180deg,#fbfbf7,#9d9d96);box-shadow:0 1px 1.5px rgba(0,0,0,.55)}
+.cell.wound::before{background:repeating-linear-gradient(90deg,#e9d6a7 0 1px,#b38f55 1px 2px)}
+.fb.bass .cell::before{background:repeating-linear-gradient(90deg,#efefe9 0 1px,#9a9a93 1px 2px)}
+.cell .dot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0);width:1.9rem;height:1.9rem;border-radius:50%;display:grid;place-items:center;font-size:.72rem;font-weight:700;color:#fff;background:#1B1B19;transition:transform .12s cubic-bezier(.3,1.5,.6,1);z-index:3;pointer-events:none;line-height:1;white-space:nowrap;box-shadow:0 2px 3px rgba(0,0,0,.45)}
+.cell.m .dot{transform:translate(-50%,-50%) scale(1)}
+.cell.root .dot{background:#FFC012;color:#1B1B19;box-shadow:0 0 0 2px #1B1B19,0 2px 3px rgba(0,0,0,.45)}
+.cell.ok .dot{background:#22A35A}
+.cell.bad .dot{background:#E0453A}
+.cell.below .dot{opacity:.6}
+.cell.ghost .dot{background:#2a1a10;color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.75)}
+.cell.lit .dot{background:#FFC012;color:#1B1B19;transform:translate(-50%,-50%) scale(1.12)}
+.cell.lit.fr .dot{background:#fff}
+.cell.hintring::after,.cell.miss::after{content:"";position:absolute;left:50%;top:50%;width:2.25rem;height:2.25rem;transform:translate(-50%,-50%);border-radius:50%;border:3px dashed #fff;z-index:2;animation:ring 1.2s ease-in-out infinite}
+.cell.miss::after{border:3px solid #FF6F62;animation:none}
+@keyframes ring{50%{transform:translate(-50%,-50%) scale(1.15)}}
+.cell:hover:not(.m)::after{content:"";position:absolute;left:50%;top:50%;width:1.1rem;height:1.1rem;transform:translate(-50%,-50%);border-radius:50%;background:rgba(255,255,255,.28)}
+.cell.open:hover:not(.m)::after{background:color-mix(in srgb,var(--ink) 20%,transparent)}
+.fnum{font-family:var(--f-mono);font-size:.75rem;color:var(--muted);text-align:center;padding-top:5px}
+.fnum.mk{color:var(--ink);font-weight:700}
+
+/* teclat */
+.kbwrap{overflow-x:auto;padding-bottom:4px}
+.kb{position:relative;display:flex;height:11rem;min-width:30rem;user-select:none}
+.wk{flex:1;border:1.5px solid var(--keyline);border-left-width:0;background:var(--wkey);color:var(--wkey-ink);border-radius:0 0 7px 7px;position:relative;padding:0 0 8px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;font-size:.72rem;font-weight:700;box-shadow:inset 0 -5px 0 rgba(0,0,0,.05)}
+.wk:first-child{border-left-width:1.5px}
+.bk{position:absolute;top:0;height:62%;background:var(--bkey);color:#fff;border:1.5px solid var(--bkey);border-radius:0 0 5px 5px;z-index:3;padding:0 0 6px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;font-size:.62rem;font-weight:700}
+.wk .sm,.bk .sm{font-family:var(--f-mono);font-size:.88rem;line-height:1;font-weight:700;background:#2B57D1;color:#fff;border-radius:5px;padding:2px 5px}
+.wk .sm:empty,.bk .sm:empty{display:none}
+.wk .nl,.bk .nl{line-height:1}
+.wk.cmark .nl{color:#8a887f}
+.wk.sel,.bk.sel{background:#FFC012;color:#1B1B19;border-color:#B98500}
+.wk.ok,.bk.ok{background:#22A35A;color:#fff;border-color:#22A35A}
+.wk.bad,.bk.bad{background:#E0453A;color:#fff;border-color:#E0453A}
+.wk.hintk,.bk.hintk{box-shadow:inset 0 0 0 4px #2B57D1}
+.wk.rootk,.bk.rootk{box-shadow:inset 0 0 0 4px #FFC012}
+.wk.ex,.bk.ex{background:#4CB4F2;color:#1B1B19;border-color:#1B1B19}
+
+/* bateria */
+.patwrap{overflow-x:auto}
+.pat{display:flex;flex-wrap:wrap;gap:14px 0}
+.pat.hidepat .stk span{visibility:hidden}
+.barx{display:flex;border-left:2px solid var(--ink);padding-left:6px;margin-right:6px}
+.barx:last-child{border-right:3px double var(--ink);padding-right:6px}
+.beat{display:flex;flex-direction:column;padding:0 4px}
+.strokes{display:grid;grid-template-columns:repeat(var(--sub),2.1rem);gap:2px}
+.stk{display:grid;grid-template-rows:1rem 1.7rem 1.7rem;justify-items:center;align-items:center;border-radius:6px;font-weight:700;font-size:1.15rem;transition:background .06s}
+.stk .ac{font-size:.95rem;font-family:var(--f-mono)}
+.stk .r1{color:var(--hd)} .stk .r2{color:var(--he)}
+.stk.acc .r1,.stk.acc .r2{font-size:1.45rem}
+.stk:not(.acc) .r1,.stk:not(.acc) .r2{opacity:.8;font-weight:500}
+.stk.now{background:var(--yellow)}
+.stk.now span{color:var(--on-yellow)}
+.stk.good{background:var(--ok-bg)} .stk.wh{background:#FFE3A3} .stk.miss{background:var(--bad-bg)}
+.bn{font-family:var(--f-mono);font-size:.8rem;color:var(--muted);border-top:1px solid var(--line);margin-top:4px;padding-top:3px;display:flex;gap:6px;align-items:center}
+.kk{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.pads{display:grid;grid-template-columns:1fr 1fr;gap:12px;user-select:none;touch-action:manipulation}
+.pad{height:7.5rem;border:0;border-radius:14px;color:#fff;display:grid;place-items:center;align-content:center;gap:2px;-webkit-tap-highlight-color:transparent;box-shadow:inset 0 -4px 0 rgba(0,0,0,.25)}
+.pad b{font-size:2.3rem;line-height:1}
+.pad span{font-size:.8rem;opacity:.9}
+.pad.pe{background:#B8471E} .pad.pd{background:#2E55C7}
+.pad.hit{animation:hit .12s}
+@keyframes hit{50%{transform:scale(.98);filter:brightness(1.3)}}
+.banner{font-size:clamp(1.3rem,3.8vw,1.8rem);font-weight:700;text-align:center;min-height:1.4em}
+.banner.go{color:var(--ok);animation:pop .3s}
+.tapseq{display:flex;flex-wrap:wrap;gap:8px;font-size:1.5rem;font-weight:700}
+.tapseq .gap{width:14px}
+.tsq{width:2.9rem;height:3.2rem;border-radius:10px;border:1.5px solid var(--line);display:grid;place-items:center;background:var(--paper);transition:transform .1s}
+.tsq.hd{color:var(--hd)} .tsq.he{color:var(--he)}
+.tsq.now{border-color:var(--ink);transform:translateY(-3px)}
+.tsq.ok{background:#22A35A;color:#fff;border-color:#22A35A}
+.tsq.shake{animation:shake .35s}
+.handkey{display:flex;gap:16px;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
+.handkey b{font-size:1.05rem}
+.seqtxt{font-family:var(--f-mono);font-size:.95rem;color:var(--muted);word-break:break-word}
+.countin{font-family:var(--f-mono);font-size:1.4rem;font-weight:700;min-height:1.5em}
+
+/* cartes */
+.opts{display:grid;grid-template-columns:repeat(var(--n,4),minmax(0,1fr));gap:12px}
+.card{position:relative;border:3px solid transparent;border-radius:12px;padding:0;background:var(--line);overflow:hidden;aspect-ratio:598/840;max-width:100%;transition:transform .12s,border-color .12s}
+.card img{display:block;width:100%;height:100%;object-fit:cover}
+.card:hover{transform:translateY(-2px)}
+.card.ok{border-color:#22A35A} .card.bad{border-color:#E0453A;animation:shake .35s}
+.card.bad img{opacity:.5}
+.card .tag{position:absolute;left:8px;top:8px;border-radius:6px;padding:2px 8px;font-size:.78rem;font-weight:700;color:#fff}
+.card.ok .tag{background:#22A35A} .card.bad .tag{background:#E0453A}
+.ph{position:absolute;height:6px;border-radius:3px;background:#1B1B19;opacity:0;transition:opacity .05s}
+.ph.on{opacity:.85}
+.cardimg{position:relative;border-radius:12px;overflow:hidden;width:min(230px,60vw);aspect-ratio:598/840}
+.cardimg img{width:100%;height:100%;display:block;object-fit:cover}
+.lcard{display:flex;flex-wrap:wrap;gap:20px;align-items:center}
+.lcside{display:grid;gap:12px;justify-items:start;min-width:0;flex:1}
+.qq{margin:0;font-weight:700;font-size:1.05rem}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+@media (max-width:560px){
+  .opts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stage{padding:14px}
+  .logo-img{height:1.2rem}
+  .pad{height:6.5rem}
+  .trk{padding:10px 12px;grid-template-columns:2rem minmax(0,1fr) auto}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+footer{max-width:960px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:.8rem}
+</style>
+
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <button class="brand" id="home-btn" aria-label="Inici"><img class="logo-img" src="marca/rockin-wordmark.png" alt="ROCKIN" width="720" height="141"><span class="sub">Llenguatge musical</span></button>
+    <button id="snd" class="snd" aria-pressed="true" title="Activa o silencia el so">♪ So</button>
+  </div>
+</header>
+<div id="app"></div>
+<footer>Rockin.cat SCCL · Bastides de suport a l'aprenentatge: es practica amb el navegador i després es porta a l'instrument i al grup. Cartes i materials sota llicència CC BY-NC-SA 4.0.</footer>
+
+<script>
+/* ================= utilitats ================= */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const mod=(n,m)=>((n%m)+m)%m, rand=n=>Math.floor(Math.random()*n), pick=a=>a[rand(a.length)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const LET=['Do','Re','Mi','Fa','Sol','La','Si'], LET_US=['C','D','E','F','G','A','B'], LET_PC=[0,2,4,5,7,9,11];
+const PC_NAME=['Do','Do#','Re','Mib','Mi','Fa','Fa#','Sol','Sol#','La','Sib','Si'];
+const ROOT_SP=[[0,0],[0,1],[1,0],[2,-1],[2,0],[3,0],[3,1],[4,0],[4,1],[5,0],[6,-1],[6,0]].map(([l,acc])=>({l,acc}));
+const accStr=a=>a>0?'#'.repeat(a):a<0?'b'.repeat(-a):'';
+const nm=(n,us)=>(us?LET_US:LET)[n.l]+accStr(n.acc);
+const pcOf=n=>mod(LET_PC[n.l]+n.acc,12);
+function spellFrom(root,semis,steps){const l=(root.l+steps)%7;const pc=mod(pcOf(root)+semis,12);let acc=pc-LET_PC[l];if(acc>6)acc-=12;if(acc<-6)acc+=12;return{l,acc}}
+const awkward=n=>Math.abs(n.acc)>1||(n.l===0&&n.acc===-1)||(n.l===3&&n.acc===-1)||(n.l===2&&n.acc===1)||(n.l===6&&n.acc===1);
+
+/* ================= desament ================= */
+const KEY='rockin.llenguatge.v3';
+const Store={
+  d:(()=>{try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}})(),
+  save(){try{localStorage.setItem(KEY,JSON.stringify(this.d))}catch(e){}},
+  get(k,def){return this.d[k]??def}, set(k,v){this.d[k]=v;this.save()}
+};
+const P={
+  all(){if(!Store.d.prog)Store.d.prog={};return Store.d.prog},
+  get(g,n){return (this.all()[g]||{})[n]||null},
+  set(g,n,v){const a=this.all();a[g]=a[g]||{};const o=a[g][n];a[g][n]={done:!!(v.done||(o&&o.done)),stars:Math.max(v.stars||0,o?o.stars||0:0),best:Math.max(v.best||0,o?o.best||0:0)};Store.save()},
+  done(g,n){const p=this.get(g,n);return !!(p&&p.done)}
+};
+
+/* ================= so ================= */
+const Snd={
+  on:true,ctx:null,master:null,out:null,cache:{},
+  ac(){
+    if(!this.ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;this.ctx=new C();this.master=this.ctx.createGain();this.master.gain.value=.8;
+      const comp=this.ctx.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;this.master.connect(comp).connect(this.ctx.destination)}
+    if(this.ctx.state==='suspended')this.ctx.resume();return this.ctx;
+  },
+  dest(){return this.out||this.master},
+  session(){const c=this.ac();if(!c)return()=>{};const b=c.createGain();b.connect(this.master);this.out=b;return()=>{try{b.gain.setValueAtTime(0,c.currentTime);b.disconnect()}catch(e){}if(this.out===b)this.out=null}},
+  ks(midi,dur,damp){
+    const c=this.ctx,sr=c.sampleRate,f=440*2**((midi-69)/12),N=Math.max(2,Math.round(sr/f)),len=Math.floor(sr*dur);
+    const b=c.createBuffer(1,len,sr),d=b.getChannelData(0);
+    for(let i=0;i<N;i++)d[i]=Math.random()*2-1;
+    for(let i=N;i<len;i++)d[i]=damp*.5*(d[i-N]+d[i-N-1]);
+    return b;
+  },
+  buf(midi,bass){const k=midi+(bass?'b':'g');if(!this.cache[k])this.cache[k]=this.ks(midi,bass?2.2:1.8,bass?.998:.996);return this.cache[k]},
+  pluckAt(midi,bass,t,vol=1,dur){
+    if(!this.on)return;const c=this.ctx;
+    const s=c.createBufferSource();s.buffer=this.buf(midi,bass);
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=bass?1000:3400;
+    const g=c.createGain(),d=dur||(bass?2.1:1.7);
+    g.gain.setValueAtTime((bass?.8:.38)*vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+    s.connect(lp).connect(g).connect(this.dest());s.start(t);s.stop(t+d+.05);
+  },
+  pluck(midi,bass,delay=0){if(!this.on)return;const c=this.ac();if(!c)return;this.pluckAt(midi,bass,c.currentTime+.01+delay)},
+  pair(a,b,bass){this.pluck(a,bass);this.pluck(b,bass,.45);this.pluck(a,bass,1);this.pluck(b,bass,1)},
+  curve(){if(!this._cv){const n=1024,cv=new Float32Array(n),k=9;for(let i=0;i<n;i++){const x=i*2/n-1;cv[i]=(1+k)*x/(1+k*Math.abs(x))}this._cv=cv}return this._cv},
+  gtr(midis,t,dur=.6,vol=1){
+    if(!this.on)return;const c=this.ctx;const mix=c.createGain();mix.gain.value=.55;
+    midis.forEach((m,i)=>{const s=c.createBufferSource();s.buffer=this.buf(m,false);s.connect(mix);s.start(t+i*.008);s.stop(t+dur+.1)});
+    const ws=c.createWaveShaper();ws.curve=this.curve();const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=90;
+    const g=c.createGain();g.gain.setValueAtTime(.16*vol,t);g.gain.setValueAtTime(.16*vol,t+dur*.7);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    mix.connect(ws).connect(hp).connect(lp).connect(g).connect(this.dest());
+  },
+  power(midis){if(!this.on)return;const c=this.ac();if(!c)return;this.gtr(midis,c.currentTime+.02,1.6)},
+  key(midi,t,dur=1.6,vel=.22){
+    const c=this.ctx,f=440*2**((midi-69)/12),g=c.createGain();
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vel,t+.008);
+    g.gain.exponentialRampToValueAtTime(vel*.35,t+Math.min(.35,dur*.5));g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    [[1,'triangle',1],[2,'sine',.35],[3,'sine',.12],[4,'sine',.05]].forEach(([m,type,a])=>{
+      const o=c.createOscillator();o.type=type;o.frequency.value=f*m;const og=c.createGain();og.gain.value=a;o.connect(og).connect(g);o.start(t);o.stop(t+dur+.05)});
+    g.connect(this.dest());
+  },
+  note(midi){if(!this.on)return;const c=this.ac();if(!c)return;this.key(midi,c.currentTime+.01,1.3,.24)},
+  chord(midis,arp){
+    if(!this.on||!midis.length)return;const c=this.ac();if(!c)return;const t=c.currentTime+.02;
+    const s=[...midis].sort((a,b)=>a-b);
+    if(arp){s.forEach((m,i)=>this.key(m,t+i*.25,1.1,.22));s.forEach(m=>this.key(m,t+s.length*.25+.1,2,.15))}
+    else s.forEach((m,i)=>this.key(m,t+i*.012,2,.16));
+  },
+  ok(){if(!this.on)return;const c=this.ac();if(!c)return;const t=c.currentTime+.01;this.key(84,t,.4,.08);this.key(91,t+.08,.6,.08)},
+  no(){if(!this.on)return;const c=this.ac();if(!c)return;const t=c.currentTime+.01,o=c.createOscillator();o.type='triangle';o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(150,t+.18);const g=c.createGain();g.gain.setValueAtTime(.14,t);g.gain.exponentialRampToValueAtTime(.001,t+.22);o.connect(g).connect(this.dest());o.start(t);o.stop(t+.25)},
+  nb(){if(!this._nb){const c=this.ctx,b=c.createBuffer(1,c.sampleRate*.5,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;this._nb=b}return this._nb},
+  noise(t,type,freq,q,vol,dec){const c=this.ctx,s=c.createBufferSource();s.buffer=this.nb();const f=c.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;const g=c.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+dec);s.connect(f).connect(g).connect(this.dest());s.start(t);s.stop(t+dec+.02)},
+  stick(t,hand,acc){if(!this.on)return;const v=acc?.95:.32;this.noise(t,'bandpass',hand==='D'?2700:1900,1.3,v,.07);
+    const c=this.ctx,o=c.createOscillator();o.frequency.value=hand==='D'?820:620;const og=c.createGain();og.gain.setValueAtTime(v*.5,t);og.gain.exponentialRampToValueAtTime(.001,t+.045);o.connect(og).connect(this.dest());o.start(t);o.stop(t+.06)},
+  hat(t,v=.18){if(!this.on)return;this.noise(t,'highpass',7500,.7,v,.045)},
+  snare(t,v=.5){if(!this.on)return;this.noise(t,'bandpass',1900,.6,v,.17);const c=this.ctx,o=c.createOscillator();o.type='triangle';o.frequency.setValueAtTime(200,t);o.frequency.exponentialRampToValueAtTime(150,t+.08);const g=c.createGain();g.gain.setValueAtTime(v*.6,t);g.gain.exponentialRampToValueAtTime(.001,t+.1);o.connect(g).connect(this.dest());o.start(t);o.stop(t+.12)},
+  click(t,strong){if(!this.on)return;const c=this.ctx,o=c.createOscillator();o.type='sine';o.frequency.value=strong?1900:1350;const g=c.createGain();g.gain.setValueAtTime(strong?.4:.26,t);g.gain.exponentialRampToValueAtTime(.001,t+.035);o.connect(g).connect(this.dest());o.start(t);o.stop(t+.05)},
+  kick(t,v=.95){if(!this.on)return;const c=this.ctx,o=c.createOscillator();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);const g=c.createGain();g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+.32);o.connect(g).connect(this.dest());o.start(t);o.stop(t+.35)},
+  tone(midi,t,dur,v=.28){if(!this.on)return;const c=this.ctx,f=440*2**((midi-69)/12),g=c.createGain();
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.008);g.gain.exponentialRampToValueAtTime(v*.45,t+Math.max(.02,dur*.6));g.gain.linearRampToValueAtTime(0,t+dur);
+    [[1,'triangle',1],[2,'sine',.3],[3,'sine',.1]].forEach(([m,type,a])=>{const o=c.createOscillator();o.type=type;o.frequency.value=f*m;const og=c.createGain();og.gain.value=a;o.connect(og).connect(g);o.start(t);o.stop(t+dur+.02)});
+    g.connect(this.dest())}
+};
+
+/* ================= cicle de pantalles ================= */
+let cleanups=[];
+const onCleanup=f=>cleanups.push(f);
+function cleanup(){const l=cleanups;cleanups=[];l.forEach(f=>{try{f()}catch(e){}})}
+const later=(fn,ms)=>{const t=setTimeout(fn,ms);onCleanup(()=>clearTimeout(t));return t};
+const app=$('#app');
+function screen(html){cleanup();if(typeof bandStop==='function')bandStop();app.innerHTML=`<div class="screen">${html}</div>`;window.scrollTo(0,0);return $('.screen',app)}
+function mkSay(el){return(h,k='')=>{el.innerHTML=h;el.className='say '+k}}
+
+/* ================= icones ================= */
+const ICONS={
+  gtr:`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M28 36 52 12"/><path d="m48 8 8 8"/><path d="M27 25c-5-3-12-1-14 4-3 1-6 4-6 9 0 9 9 18 18 18 5 0 8-3 9-6 5-2 7-9 4-14-2-4-6-5-8-4"/><circle cx="23" cy="41" r="3.5"/></svg>`,
+  bass:`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M26 38 54 10"/><path d="m50 6 8 8"/><path d="M25 27c-6-4-14-2-15 4-3 2-5 5-4 10 1 8 9 16 17 16 5 0 8-4 8-7 5-2 7-8 3-13-1-2-4-3-5-3"/><path d="m15 47 4 4M19 43l4 4"/></svg>`,
+  drum:`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="32" cy="34" rx="20" ry="7"/><path d="M12 34v12c0 4 9 7 20 7s20-3 20-7V34"/><path d="m14 8 18 22M50 8 32 30"/></svg>`,
+  keys:`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><rect x="6" y="14" width="52" height="36" rx="4"/><path d="M16 34v16M26 34v16M38 34v16M48 34v16"/><path d="M13 14h6v20h-6zM23 14h6v20h-6zM35 14h6v20h-6zM45 14h6v20h-6z" fill="currentColor"/></svg>`,
+  dict:`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><rect x="12" y="6" width="40" height="52" rx="6"/><circle cx="23" cy="32" r="5" fill="currentColor"/><path d="M32 27a5 5 0 0 0 0 10z" fill="currentColor"/><path d="M36 27a5 5 0 0 1 0 10z" fill="currentColor"/><circle cx="45" cy="32" r="4.5"/></svg>`
+};
+
+const LOCK='<svg width="14" height="14" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round" aria-label="Tancada"><rect x="10" y="18" width="20" height="15" rx="3"/><path d="M14 18v-4a6 6 0 0 1 12 0v4"/></svg>';
+/* ================= pal ================= */
+const GTR={tuning:[40,45,50,55,59,64],strNames:['Mi','La','Re','Sol','Si','Mi'],bass:false};
+const BAS={tuning:[28,33,38,43],strNames:['Mi','La','Re','Sol'],bass:true};
+class Fretboard{
+  constructor(host,inst){
+    this.inst=inst;this.cells={};const S=inst.tuning.length;this.S=S;
+    const ws=[];for(let n=1;n<=12;n++)ws.push((2**(-(n-1)/12)).toFixed(3)+'fr');
+    let h=`<div class="fb${inst.bass?' bass':''}" style="grid-template-columns:3rem 2.3rem ${ws.join(' ')};grid-template-rows:repeat(${S},var(--row)) 1.5rem">`;
+    h+=`<div class="wood" style="grid-row:1/span ${S};grid-column:3/-1"></div>`;
+    [3,5,7,9,12].forEach(f=>h+=`<div class="inlay${f===12?' dbl':''}" style="grid-row:1/span ${S};grid-column:${f+2}"><i></i>${f===12?'<i></i>':''}</div>`);
+    for(let r=0;r<S;r++){const s=S-1-r,num=r+1;
+      const th=(inst.bass?1.6:.8)+(S-1-s)*(inst.bass?.6:.38),wound=!inst.bass&&s<=2;
+      h+=`<div class="slab" style="grid-row:${r+1};grid-column:1"><b>${num}</b>${inst.strNames[s]}</div>`;
+      for(let f=0;f<=12;f++)h+=`<button class="cell${f===0?' open':''}${wound?' wound':''}" style="grid-row:${r+1};grid-column:${f+2};--th:${th.toFixed(2)}px" data-s="${s}" data-f="${f}" aria-label="Corda ${num} (${inst.strNames[s]}), ${f===0?'a l\'aire':'trast '+f}"><span class="dot"></span></button>`;
+    }
+    for(let f=0;f<=12;f++)h+=`<div class="fnum${[3,5,7,9,12].includes(f)?' mk':''}" style="grid-row:${S+1};grid-column:${f+2}">${f}</div>`;
+    h+='</div>';
+    const w=document.createElement('div');w.className='fbwrap';w.innerHTML=h;host.appendChild(w);this.el=$('.fb',w);
+    $$('.cell',w).forEach(b=>this.cells[b.dataset.s+'-'+b.dataset.f]=b);
+    this.el.addEventListener('click',e=>{const b=e.target.closest('.cell');if(b&&this.onCell)this.onCell(+b.dataset.s,+b.dataset.f)});
+  }
+  midi(s,f){return this.inst.tuning[s]+f}
+  pc(s,f){return mod(this.midi(s,f),12)}
+  play(s,f){Snd.pluck(this.midi(s,f),this.inst.bass)}
+  c(s,f){return this.cells[s+'-'+f]}
+  mark(s,f,cls,label,bg){const c=this.c(s,f);if(!c)return;clearTimeout(c._t);c.classList.remove('bad','ok','root','below','ghost','lit','fr');c.classList.add('m',...(cls||'').split(' ').filter(Boolean));const d=c.querySelector('.dot');d.textContent=label||'';d.style.background=bg||'';return c}
+  unmark(s,f){const c=this.c(s,f);c.classList.remove('m','root','ok','bad','below','miss','ghost','lit','fr');const d=c.querySelector('.dot');d.textContent='';d.style.background=''}
+  clear(){Object.values(this.cells).forEach(c=>{clearTimeout(c._t);c.classList.remove('m','root','ok','bad','below','hintring','miss','ghost','lit','fr');const d=c.querySelector('.dot');d.textContent='';d.style.background=''})}
+  flashBad(s,f,label){const c=this.mark(s,f,'bad',label);c._t=setTimeout(()=>{if(c.classList.contains('bad'))this.unmark(s,f)},1300)}
+  ring(s,f){this.c(s,f).classList.add('hintring')}
+  unring(){Object.values(this.cells).forEach(c=>c.classList.remove('hintring'))}
+  positions(pc){const r=[];for(let s=0;s<this.S;s++)for(let f=0;f<=12;f++)if(this.pc(s,f)===pc)r.push([s,f]);return r}
+}
+function shape(s1,f1,s2,f2){
+  const ds=s2-s1,df=f2-f1;
+  const sp=ds===0?'a la mateixa corda':ds>0?(ds>1?`${ds} cordes més agudes`:'la corda més aguda del costat'):(ds<-1?`${-ds} cordes més greus`:'la corda més greu del costat');
+  const fp=df===0?'al mateix trast':df>0?`${df} trast${df>1?'s':''} a la dreta`:`${-df} trast${df<-1?'s':''} a l'esquerra`;
+  return sp+', '+fp;
+}
+const crossesGB=(inst,s1,s2)=>!inst.bass&&Math.min(s1,s2)<=3&&Math.max(s1,s2)>=4;
+function autoRoot(inst,pc){let best=null;for(const s of [0,1])for(let f=0;f<=10;f++)if(mod(inst.tuning[s]+f,12)===pc){const cost=Math.abs(f-4.5)+s*.4+(f===0?2:0);if(!best||cost<best.c)best={s,f,c:cost,m:inst.tuning[s]+f}}return best}
+function nearPos(inst,midi,root){let best=null;for(let s=0;s<inst.tuning.length;s++){const f=midi-inst.tuning[s];if(f<0||f>12||Math.abs(f-root.f)>4||(s===root.s&&f!==root.f&&midi!==root.m))continue;const cost=Math.abs(f-root.f)+1.3*Math.abs(s-root.s);if(!best||cost<best.c)best={s,f,c:cost}}return best}
+
+/* ================= teclat ================= */
+class Keys{
+  constructor(host,lo=48,hi=72){
+    this.lo=lo;this.hi=hi;this.k={};let h='',wi=0;const whites=[];
+    for(let m=lo;m<=hi;m++)if(LET_PC.includes(mod(m,12)))whites.push(m);
+    const W=whites.length;
+    for(let m=lo;m<=hi;m++){const pc=mod(m,12);
+      if(LET_PC.includes(pc)){h+=`<button class="wk" data-m="${m}" aria-label="${PC_NAME[pc]}"><span class="sm"></span><span class="nl"></span></button>`;wi++}
+      else h+=`<button class="bk" data-m="${m}" style="left:calc(${wi}/${W}*100% - (100%/${W})*.31);width:calc(100%/${W}*.62)" aria-label="${PC_NAME[pc]}"><span class="sm"></span><span class="nl"></span></button>`;
+    }
+    const w=document.createElement('div');w.className='kbwrap';w.innerHTML=`<div class="kb">${h}</div>`;host.appendChild(w);
+    $$('[data-m]',w).forEach(k=>this.k[k.dataset.m]=k);
+    w.addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(b&&this.onKey)this.onKey(+b.dataset.m)});
+    this.reset();
+  }
+  reset(names='do'){Object.entries(this.k).forEach(([m,k])=>{const pc=mod(+m,12),white=k.classList.contains('wk');k.className=white?'wk':'bk';if(white&&pc===0)k.classList.add('cmark');
+    $('.nl',k).textContent=(names==='all'||(names==='do'&&pc===0))?PC_NAME[pc]:'';$('.sm',k).textContent=''})}
+  mark(m,cls,label,sm){const k=this.k[m];if(!k)return;if(cls)k.classList.add(...cls.split(' '));if(label!==undefined)$('.nl',k).textContent=label;if(sm!==undefined)$('.sm',k).textContent=sm}
+  ruler(root,n=12){for(let i=1;i<=n&&root+i<=this.hi;i++)$('.sm',this.k[root+i]).textContent=i}
+  flash(m,label){const k=this.k[m];k.classList.add('bad');const nl=$('.nl',k),old=nl.textContent;nl.textContent=label;setTimeout(()=>{k.classList.remove('bad');nl.textContent=old},900)}
+}
+
+/* ================= bateria ================= */
+class Pads{
+  constructor(host){
+    const w=document.createElement('div');w.className='pads';
+    w.innerHTML=`<button class="pad pe" data-h="E"><b>E</b><span>mà esquerra · tecla F</span></button><button class="pad pd" data-h="D"><b>D</b><span>mà dreta · tecla J</span></button>`;
+    host.appendChild(w);this.w=w;
+    w.addEventListener('pointerdown',e=>{const b=e.target.closest('.pad');if(b){e.preventDefault();this.hit(b.dataset.h)}});
+    this.kd=e=>{if(!document.body.contains(this.w)){this.destroy();return}if(e.repeat||e.metaKey||e.ctrlKey)return;const k=e.key.toLowerCase();if(k==='f'){e.preventDefault();this.hit('E')}else if(k==='j'){e.preventDefault();this.hit('D')}};
+    document.addEventListener('keydown',this.kd);onCleanup(()=>this.destroy());
+  }
+  hit(h){const c=Snd.ac();const now=c?c.currentTime:0;if(c)Snd.stick(now+.005,h,false);const b=this.w.querySelector(`[data-h=${h}]`);b.classList.remove('hit');void b.offsetWidth;b.classList.add('hit');this.onHit&&this.onHit(h,now)}
+  destroy(){document.removeEventListener('keydown',this.kd)}
+}
+function drumNotes(seq,sub){const one=[];seq.split(' ').forEach(g=>[...g].forEach((h,j)=>one.push({h,acc:j===0})));const per=sub*4;let n=[...one];while(n.length%per&&n.length<per*4)n=n.concat(one);return n}
+function patHTML(notes,sub,accent=true,kick=false){
+  const per=sub*4;let h='';
+  for(let b=0;b<notes.length/per;b++){h+='<div class="barx">';
+    for(let beat=0;beat<4;beat++){h+=`<div class="beat"><div class="strokes" style="--sub:${sub}">`;
+      for(let k=0;k<sub;k++){const i=b*per+beat*sub+k,n=notes[i],acc=accent&&n.acc;
+        h+=`<div class="stk ${acc?'acc':''}" data-i="${i}"><span class="ac">${acc?'&gt;':''}</span><span class="r1">${n.h==='D'?'D':''}</span><span class="r2">${n.h==='E'?'E':''}</span></div>`}
+      h+=`</div><div class="bn">${beat+1}${sub===3?'<span style="opacity:.7">·3</span>':''}${kick?'<span class="kk" title="bombo"></span>':''}</div></div>`}
+    h+='</div>'}
+  return h;
+}
+
+/* ================= la banda ================= */
+let bandStop=null;
+const bassRoot=pc=>28+mod(pc-4,12);
+const gtrAuto=pc=>{const r=autoRoot(GTR,pc);return[r.m,r.m+7,r.m+12]};
+function keysVoicing(ch){const r=48+mod(ch.pc,12),third=ch.q==='min'?3:4;let v=[r,r+third,r+7];if(r>=55)v=v.map(x=>x-12);if(ch.q==='5')v=[r,r+7,r+12];return v}
+/* parts: {style, bass:fn(ci)->[4 midi] o 'root', gtr:{kind:'power'|'arp', notes:fn(ci)}, keys:fn(ci)->[midi] o 'auto'} */
+function bandPlay({bpm,prog,loops=2,parts={},onBar,onBeat,onEnd}){
+  const c=Snd.ac();if(!c||!Snd.on)return 0;if(bandStop)bandStop();
+  const end=Snd.session(),timers=[],beat=60/bpm,style=parts.style||'rock';let t=c.currentTime+.15;
+  const at=(tt,fn)=>timers.push(setTimeout(fn,Math.max(0,(tt-c.currentTime)*1000)));
+  for(let i=0;i<4;i++){Snd.hat(t+i*beat,i===0?.35:.22)}
+  at(t,()=>onBeat&&onBeat(-1,-1,-1));
+  for(let i=0;i<4;i++)at(t+i*beat,()=>onBeat&&onBeat(-1,i,-1));
+  t+=4*beat;const t0=t;
+  for(let lp=0;lp<loops;lp++)prog.forEach((ch,ci)=>{
+    const bt=t0+(lp*prog.length+ci)*4*beat;
+    for(let e=0;e<8;e++){const tt=bt+e*beat/2;
+      Snd.hat(tt,style==='ballad'?(e%2?.06:.1):(e%2?.1:.17));
+      if(e===0||(style==='rock'&&(e===4||e===5))||(style==='ballad'&&e===5))Snd.kick(tt,style==='ballad'?.7:.95);
+      if(e===2||e===6)Snd.snare(tt,style==='ballad'?.28:.5)}
+    if(parts.bass==='root'){for(let e=0;e<8;e++)Snd.pluckAt(bassRoot(ch.pc),true,bt+e*beat/2,.8,beat/2*.95)}
+    else if(parts.bass){const ns=parts.bass(ci);ns.forEach((m,k)=>Snd.pluckAt(m,true,bt+k*beat,1,beat*.95))}
+    if(parts.gtr){const ns=parts.gtr.notes(ci);
+      if(parts.gtr.kind==='power')for(let e=0;e<8;e++)Snd.gtr(ns,bt+e*beat/2,e===0?beat*.9:beat/2*.6,(parts.gtr.vol||1)*(e===0?1.1:.8));
+      else{const order=[0,1,2,3,2,1,0,1];order.forEach((k,e)=>Snd.pluckAt(ns[Math.min(k,ns.length-1)],false,bt+e*beat/2,.9,1.4))}}
+    if(parts.keys){const ns=parts.keys==='auto'?keysVoicing(ch):parts.keys(ci);[0,2].forEach(b=>ns.forEach(m=>Snd.key(m,bt+b*beat,beat*2*.95,parts.keysVol||.13)))}
+    at(bt,()=>onBar&&onBar(ci,lp));
+    for(let b=0;b<4;b++)at(bt+b*beat,()=>onBeat&&onBeat(ci,b,lp));
+  });
+  const total=t0+loops*prog.length*4*beat;
+  at(total+.1,()=>{bandStop=null;end();onEnd&&onEnd()});
+  bandStop=()=>{end();timers.forEach(clearTimeout);bandStop=null};
+  return (total-c.currentTime)*1000;
+}
+
+/* ================= cartes rítmiques ================= */
+const RC={"rhythm_binary_01":{"m":"b","n":1,"sub":[1,1,1,1],"p":[[1],[1],[1],[1]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_02":{"m":"b","n":2,"sub":[1,1,1,1],"p":[[1],[1],[0],[1]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_03":{"m":"b","n":3,"sub":[1,1,1,1],"p":[[1],[0],[1],[1]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.3003,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_04":{"m":"b","n":4,"sub":[1,1,1,1],"p":[[1],[1],[1],[0]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_05":{"m":"b","n":5,"sub":[1,1,1,1],"p":[[1],[2],[2],[2]],"L":{"y":0.5,"r":0.0857,"c":[[0.0712,0.244],[0.2989,0.4717],[0.5265,0.6993],[0.7541,0.927]]}},"rhythm_binary_06":{"m":"b","n":6,"sub":[1,1,1,1],"p":[[1],[1],[2],[1]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.3003,0.4725],[0.5275,0.6997],[0.7547,0.927]]}},"rhythm_binary_07":{"m":"b","n":7,"sub":[1,1,1,1],"p":[[1],[0],[1],[0]],"L":{"y":0.5013,"r":0.0861,"c":[[0.0757,0.2471],[0.3021,0.4743],[0.5302,0.7015],[0.7583,0.9297]]}},"rhythm_binary_08":{"m":"b","n":8,"sub":[1,1,1,1],"p":[[1],[1],[0],[0]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_09":{"m":"b","n":9,"sub":[1,1,1,1],"p":[[0],[1],[0],[1]],"L":{"y":0.5,"r":0.0857,"c":[[0.0739,0.2462],[0.3021,0.4743],[0.5302,0.7015],[0.7583,0.9297]]}},"rhythm_binary_10":{"m":"b","n":10,"sub":[1,1,1,1],"p":[[1],[0],[1],[0]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.3003,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_11":{"m":"b","n":11,"sub":[1,1,1,2],"p":[[1],[1],[1],[0,1]],"L":{"y":0.5013,"r":0.0861,"c":[[0.073,0.2453],[0.3003,0.4725],[0.5284,0.6997],[0.7565,0.9279]]}},"rhythm_binary_12":{"m":"b","n":12,"sub":[2,2,2,2],"p":[[0,1],[1,1],[0,1],[1,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.0721,0.2435],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_13":{"m":"b","n":13,"sub":[2,2,2,2],"p":[[1,1],[1,1],[1,1],[1,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.0721,0.2435],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_14":{"m":"b","n":14,"sub":[1,2,1,2],"p":[[0],[1,1],[0],[1,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.0721,0.2435],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_15":{"m":"b","n":15,"sub":[1,2,1,1],"p":[[1],[1,1],[0],[0]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5609,0.7322],[0.7547,0.927]]}},"rhythm_binary_16":{"m":"b","n":16,"sub":[1,2,2,1],"p":[[1],[1,1],[1,1],[0]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_17":{"m":"b","n":17,"sub":[2,1,2,2],"p":[[1,1],[1],[1,1],[1,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.0721,0.2435],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_18":{"m":"b","n":18,"sub":[1,1,2,2],"p":[[1],[1],[1,1],[1,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.0721,0.2435],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_19":{"m":"b","n":19,"sub":[2,1,1,1],"p":[[0,1],[1],[1],[1]],"L":{"y":0.5,"r":0.0857,"c":[[0.0739,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_20":{"m":"b","n":20,"sub":[2,1,1,1],"p":[[0,1],[1],[1],[0]],"L":{"y":0.5,"r":0.0857,"c":[[0.0739,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_21":{"m":"b","n":21,"sub":[2,2,2,2],"p":[[0,1],[0,1],[0,1],[0,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.0721,0.2453],[0.3003,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_22":{"m":"b","n":22,"sub":[1,2,1,1],"p":[[1],[0,1],[1],[1]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.3003,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_23":{"m":"b","n":23,"sub":[1,2,1,1],"p":[[1],[0,1],[1],[0]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.3003,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_24":{"m":"b","n":24,"sub":[1,2,1,2],"p":[[1],[0,1],[1],[0,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.3003,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_25":{"m":"b","n":25,"sub":[4,4,4,4],"p":[[1,1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1,1]],"L":{"y":0.5,"r":0.0875,"c":[[0.073,0.2453],[0.2994,0.4725],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_26":{"m":"b","n":26,"sub":[4,4,4,4],"p":[[1,2,1,1],[1,2,1,1],[1,2,1,1],[1,2,1,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4725],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_27":{"m":"b","n":27,"sub":[4,4,4,4],"p":[[1,1,1,2],[1,1,1,2],[1,1,1,2],[1,1,1,2]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_28":{"m":"b","n":28,"sub":[4,4,4,4],"p":[[1,1,2,1],[1,1,2,1],[1,1,2,1],[1,1,2,1]],"L":{"y":0.5,"r":0.0875,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_29":{"m":"b","n":29,"sub":[4,4,4,4],"p":[[1,2,2,1],[1,2,2,1],[1,2,2,1],[1,2,2,1]],"L":{"y":0.5006,"r":0.0875,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_binary_30":{"m":"b","n":30,"sub":[4,4,4,4],"p":[[1,1,2,2],[1,1,2,2],[1,1,2,2],[1,1,2,2]],"L":{"y":0.5006,"r":0.0875,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_ternary_01":{"m":"t","n":1,"sub":[1,1,1],"p":[[1],[1],[1]],"L":{"y":0.5,"r":0.1181,"c":[[0.0712,0.3066],[0.3814,0.6168],[0.6934,0.9288]]}},"rhythm_ternary_02":{"m":"t","n":2,"sub":[1,1,1],"p":[[1],[1],[0]],"L":{"y":0.5013,"r":0.1177,"c":[[0.073,0.3093],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_03":{"m":"t","n":3,"sub":[1,1,1],"p":[[1],[0],[1]],"L":{"y":0.5,"r":0.1181,"c":[[0.073,0.3093],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_04":{"m":"t","n":4,"sub":[1,1,1],"p":[[0],[1],[1]],"L":{"y":0.5,"r":0.1181,"c":[[0.0721,0.3075],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_05":{"m":"t","n":5,"sub":[1,1,1],"p":[[1],[0],[0]],"L":{"y":0.5,"r":0.1181,"c":[[0.073,0.3093],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_06":{"m":"t","n":6,"sub":[1,1,1],"p":[[0],[0],[1]],"L":{"y":0.5,"r":0.1136,"c":[[0.0721,0.2985],[0.3724,0.5987],[0.6718,0.8981]]}},"rhythm_ternary_07":{"m":"t","n":7,"sub":[1,1,1],"p":[[0],[1],[0]],"L":{"y":0.5,"r":0.1136,"c":[[0.0721,0.2985],[0.3724,0.5987],[0.6718,0.8981]]}},"rhythm_ternary_08":{"m":"t","n":8,"sub":[1,1,1],"p":[[1],[2],[1]],"L":{"y":0.5,"r":0.1136,"c":[[0.0712,0.2982],[0.3712,0.5981],[0.6718,0.8981]]}},"rhythm_ternary_09":{"m":"t","n":9,"sub":[1,1,1],"p":[[1],[1],[2]],"L":{"y":0.5,"r":0.1136,"c":[[0.1019,0.3273],[0.4013,0.6276],[0.7006,0.927]]}},"rhythm_ternary_10":{"m":"t","n":10,"sub":[1,1,1],"p":[[1],[2],[2]],"L":{"y":0.5,"r":0.1258,"c":[[0.0712,0.3046],[0.3851,0.6185],[0.699,0.9324]]}},"rhythm_ternary_11":{"m":"t","n":11,"sub":[2,2,2],"p":[[1,1],[1,1],[1,1]],"L":{"y":0.5,"r":0.1172,"c":[[0.0721,0.3075],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_12":{"m":"t","n":12,"sub":[1,1,2],"p":[[1],[1],[0,1]],"L":{"y":0.5,"r":0.1136,"c":[[0.073,0.3003],[0.3715,0.5987],[0.6718,0.8981]]}},"rhythm_ternary_13":{"m":"t","n":13,"sub":[2,1,1],"p":[[0,1],[1],[1]],"L":{"y":0.5,"r":0.1181,"c":[[0.0721,0.3093],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_14":{"m":"t","n":14,"sub":[2,2,2],"p":[[0,1],[1,1],[0,1]],"L":{"y":0.5,"r":0.1181,"c":[[0.0721,0.3075],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_15":{"m":"t","n":15,"sub":[1,2,2],"p":[[1],[1,1],[0,1]],"L":{"y":0.5,"r":0.1181,"c":[[0.0721,0.3075],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_16":{"m":"t","n":16,"sub":[1,2,1],"p":[[0],[1,1],[0]],"L":{"y":0.5,"r":0.1181,"c":[[0.0721,0.3075],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_17":{"m":"t","n":17,"sub":[1,2,1],"p":[[1],[1,1],[0]],"L":{"y":0.4981,"r":0.1181,"c":[[0.073,0.3093],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_18":{"m":"t","n":18,"sub":[1,2,2],"p":[[1],[1,1],[1,1]],"L":{"y":0.5,"r":0.1177,"c":[[0.073,0.3093],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_19":{"m":"t","n":19,"sub":[2,1,2],"p":[[1,1],[1],[1,1]],"L":{"y":0.5,"r":0.1181,"c":[[0.0721,0.3075],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_20":{"m":"t","n":20,"sub":[2,1,1],"p":[[1,1],[1],[1]],"L":{"y":0.5,"r":0.1181,"c":[[0.0721,0.3075],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_21":{"m":"t","n":21,"sub":[1,1,2],"p":[[1],[1],[1,1]],"L":{"y":0.5,"r":0.1181,"c":[[0.0721,0.3075],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_22":{"m":"t","n":22,"sub":[2,2,2],"p":[[0,1],[0,1],[0,1]],"L":{"y":0.5,"r":0.1181,"c":[[0.0721,0.3093],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_23":{"m":"t","n":23,"sub":[1,2,1],"p":[[1],[0,1],[1]],"L":{"y":0.5,"r":0.1181,"c":[[0.073,0.3093],[0.3841,0.6195],[0.6961,0.9315]]}},"rhythm_ternary_24":{"m":"t","n":24,"sub":[2,1,1],"p":[[0,1],[1],[0]],"L":{"y":0.5,"r":0.1127,"c":[[0.1019,0.3273],[0.4013,0.6276],[0.7006,0.9261]]}},"rhythm_ternary_25":{"m":"t","n":25,"sub":[2,1,2],"p":[[0,1],[1],[0,1]],"L":{"y":0.5,"r":0.1127,"c":[[0.1019,0.3273],[0.4013,0.6276],[0.7006,0.927]]}},"rhythm_ternary_26":{"m":"t","n":26,"sub":[3,3,3,3],"p":[[1,1,1],[1,1,1],[1,1,1],[1,1,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_ternary_27":{"m":"t","n":27,"sub":[3,3,3,3],"p":[[1,2,1],[1,2,1],[1,2,1],[1,2,1]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_ternary_28":{"m":"t","n":28,"sub":[3,3,3,3],"p":[[1,1,2],[1,1,2],[1,1,2],[1,1,2]],"L":{"y":0.5,"r":0.0857,"c":[[0.073,0.2453],[0.2994,0.4716],[0.5275,0.6988],[0.7547,0.927]]}},"rhythm_ternary_29":{"m":"t","n":29,"sub":[1,1,1],"p":[[1],[1],[1]],"L":{"y":0.509,"r":0.1132,"c":[[0.073,0.3003],[0.3724,0.5987],[0.6727,0.8999]]}},"rhythm_ternary_30":{"m":"t","n":30,"sub":[3,3,3],"p":[[1,1,1],[1,1,1],[1,1,1]],"L":{"y":0.509,"r":0.1132,"c":[[0.073,0.3003],[0.3724,0.5987],[0.6727,0.8999]]}},"rhythm_ternary_31":{"m":"t","n":31,"sub":[3,3,3],"p":[[1,2,1],[1,2,1],[1,2,1]],"L":{"y":0.509,"r":0.1132,"c":[[0.073,0.3003],[0.3724,0.5996],[0.6727,0.8999]]}},"rhythm_ternary_32":{"m":"t","n":32,"sub":[3,3,3],"p":[[1,1,2],[1,1,2],[1,1,2]],"L":{"y":0.509,"r":0.1132,"c":[[0.073,0.3003],[0.3724,0.5996],[0.6727,0.8999]]}},"rhythm_ternary_33":{"m":"t","n":33,"sub":[1,1],"p":[[1],[1]],"L":{"y":0.5,"r":0.1344,"c":[[0.1001,0.3688],[0.5951,0.8638]]}},"rhythm_ternary_34":{"m":"t","n":34,"sub":[3,3],"p":[[1,1,1],[1,1,1]],"L":{"y":0.5,"r":0.1344,"c":[[0.1001,0.3688],[0.5951,0.8638]]}},"rhythm_ternary_35":{"m":"t","n":35,"sub":[3,3],"p":[[1,1,2],[1,1,2]],"L":{"y":0.5,"r":0.1344,"c":[[0.1001,0.3688],[0.5951,0.8638]]}},"rhythm_ternary_36":{"m":"t","n":36,"sub":[3,3],"p":[[1,2,1],[1,2,1]],"L":{"y":0.5,"r":0.1344,"c":[[0.1001,0.3688],[0.5951,0.8638]]}}};
+const RCL=Object.entries(RC).map(([id,c])=>({id,...c,sig:JSON.stringify([c.sub,c.p]),beats:c.p.length}));
+function cardHTML(id){const c=RC[id];return `<img src="cartes/${id}.jpg" alt="Carta rítmica ${c.m==='b'?'binària':'ternària'} ${c.n}" loading="lazy">${c.L.c.map((x,j)=>`<span class="ph" data-b="${j}" style="left:${x[0]*100}%;width:${(x[1]-x[0])*100}%;top:${(c.L.y+c.L.r*598/840+.025)*100}%"></span>`).join('')}`}
+let cardStop=null;
+function playCard(card,el,{countIn=true,met=true,tempo=80}={}){
+  if(cardStop)cardStop();
+  const c=Snd.ac();if(!c||!Snd.on)return 0;
+  const end=Snd.session(),timers=[];
+  cardStop=()=>{end();timers.forEach(clearTimeout);el&&$$('.ph',el).forEach(p=>p.classList.remove('on'));cardStop=null};
+  onCleanup(()=>cardStop&&cardStop());
+  const beat=60/tempo,B=card.p.length;let t=c.currentTime+.12;
+  if(countIn){for(let i=0;i<B;i++)Snd.click(t+i*beat,i===0);t+=B*beat}
+  const ev=[];card.p.forEach((arr,bi)=>{const sl=beat/arr.length;arr.forEach((v,si)=>ev.push({t:t+bi*beat+si*sl,v,d:sl}))});
+  ev.forEach((e,i)=>{if(e.v!==1)return;let d=e.d;for(let j=i+1;j<ev.length&&ev[j].v===2;j++)d+=ev[j].d;Snd.tone(67,e.t,Math.max(.12,d*.92));Snd.stick(e.t,'D',false)});
+  if(met)for(let i=0;i<B;i++)Snd.click(t+i*beat,false);
+  const now=c.currentTime;
+  if(el)for(let i=0;i<B;i++)timers.push(setTimeout(()=>$$('.ph',el).forEach(p=>p.classList.toggle('on',+p.dataset.b===i)),(t+i*beat-now)*1000));
+  timers.push(setTimeout(()=>{el&&$$('.ph',el).forEach(p=>p.classList.remove('on'))},(t+B*beat-now)*1000+50));
+  return (t+B*beat-now)*1000;
+}
+
+/* ================= passos de lliçó ================= */
+function formulaHTML(parts){return `<div class="formula">${parts.map((p,i)=>i%2?`<span class="ar">${p}</span>`:`<span class="fn">${p}</span>`).join('')}</div>`}
+const S={
+  info(title,text,o={}){return{title,text,run(c){
+    if(o.html)c.area.insertAdjacentHTML('beforeend',o.html);
+    if(o.btns){const d=document.createElement('div');d.className='actions';d.innerHTML=o.btns.map((b,i)=>`<button class="btn acc" data-b="${i}">${b.label}</button>`).join('');c.area.appendChild(d);
+      const heard=new Set();d.onclick=e=>{const t=e.target.closest('[data-b]');if(!t)return;o.btns[+t.dataset.b].fn();heard.add(t.dataset.b);if(o.mustListen&&heard.size>=o.btns.length&&!c.isDone){c.isDone=true;later(()=>c.done(o.ok),1200)}}}
+    if(!o.mustListen){c.isDone=true;c.done(null,true)}
+  }}},
+  fret(title,text,o){return{title,text,run(c){
+    const fb=new Fretboard(c.area,o.inst);
+    (o.marks||[]).forEach(([s,f,l])=>fb.mark(s,f,'root',l));(o.fixed||[]).forEach(([s,f,l])=>fb.mark(s,f,'ok',l));(o.rings||[]).forEach(([s,f])=>fb.ring(s,f));
+    const root=o.marks&&o.marks[0],rm=root?fb.midi(root[0],root[1]):null;
+    const seq=o.seq?o.seq.map(x=>x):null,all=o.all?o.all.map(p=>p.join('-')):null,got=new Set();
+    fb.onCell=(s,f)=>{fb.play(s,f);if(c.isDone)return;
+      if(root&&s===root[0]&&f===root[1]){c.say('Aquesta és la nota de partida.');return}
+      let ok=false;
+      if(o.at)ok=s===o.at[0]&&f===o.at[1];
+      else if(o.semis!==undefined)ok=fb.midi(s,f)===rm+o.semis;
+      else if(o.pc!==undefined)ok=fb.pc(s,f)===o.pc&&Math.abs(f-root[1])<=4&&s!==root[0];
+      else if(seq)ok=s===seq[0][0]&&f===seq[0][1];
+      else if(all)ok=all.includes(s+'-'+f)&&!got.has(s+'-'+f);
+      if(ok){fb.mark(s,f,'ok',o.label||PC_NAME[fb.pc(s,f)]);fb.unring();
+        if(seq){seq.shift();if(seq.length){c.say(o.seqMsg?o.seqMsg(seq.length):'Bé! Ara la següent.','ok');Snd.ok();return}}
+        if(all){got.add(s+'-'+f);if(got.size<all.length){c.say(`Bé! En falta${all.length-got.size>1?'n':''} ${all.length-got.size}.`,'ok');Snd.ok();return}}
+        c.isDone=true;c.done(o.ok);if(o.after)later(()=>o.after(fb),300);
+      }else{fb.flashBad(s,f,PC_NAME[fb.pc(s,f)]);c.say(o.bad?o.bad(fb.pc(s,f)):`Això és un ${PC_NAME[fb.pc(s,f)]}. Torna-hi.`,'bad');Snd.no()}
+    };
+  }}},
+  keys(title,text,o){return{title,text,run(c){
+    if(o.formula)c.area.insertAdjacentHTML('beforeend',formulaHTML(o.formula));
+    const kb=new Keys(c.area,48,72),sel=new Set(o.pre||[]);
+    const paint=()=>{kb.reset('do');(o.marks||[]).forEach(([m,l])=>kb.mark(m,'rootk',l));if(o.ruler!==undefined){kb.ruler(o.ruler,o.rulerN||12);kb.mark(o.ruler,'',undefined,'0')}sel.forEach(m=>kb.mark(m,'sel',PC_NAME[mod(m,12)]))};
+    paint();
+    kb.onKey=m=>{if(c.isDone){Snd.note(m);return}
+      if(o.target.pcs===undefined){Snd.note(m);
+        const ok=o.target.midi!==undefined?m===o.target.midi:mod(m,12)===o.target.pc;
+        if(ok){kb.mark(m,'ok',PC_NAME[mod(m,12)]);c.isDone=true;c.done(o.ok);if(o.after)later(()=>o.after(kb),250)}
+        else{kb.flash(m,PC_NAME[mod(m,12)]);c.say(o.bad?o.bad(m):`Això és un ${PC_NAME[mod(m,12)]}. Torna-hi.`,'bad');Snd.no()}
+        return}
+      sel.has(m)?sel.delete(m):(sel.add(m),Snd.note(m));paint();
+      const have=new Set([...sel].map(x=>mod(x,12))),T=o.target.pcs;
+      const extra=[...have].filter(p=>!T.includes(p)),missing=T.filter(p=>!have.has(p));
+      if(!extra.length&&!missing.length){c.isDone=true;sel.forEach(x=>kb.mark(x,'ok'));later(()=>Snd.chord([...sel],false),150);c.done(o.ok)}
+      else if(extra.length)c.say(`El ${extra.map(p=>PC_NAME[p]).join(' i el ')} no hi va. Toca'l una altra vegada per treure'l.`,'bad');
+      else c.say(`Bé! En falta${missing.length>1?'n':''} ${missing.length}.`);
+    };
+  }}},
+  taps(title,text,o){return{title,text,run(c){
+    const notes=[];const groups=o.seq.split(' ');let h='<div class="tapseq">';
+    groups.forEach((g,gi)=>{[...g].forEach(x=>{h+=`<span class="tsq ${x==='D'?'hd':'he'}">${x}</span>`;notes.push(x)});if(gi<groups.length-1)h+='<span class="gap"></span>'});
+    c.area.insertAdjacentHTML('beforeend',h+'</div>');
+    const els=$$('.tsq',c.area);let i=0;els[0].classList.add('now');
+    const pads=new Pads(c.area);
+    pads.onHit=x=>{if(c.isDone)return;
+      if(x===notes[i]){els[i].classList.remove('now');els[i].classList.add('ok');i++;
+        if(i>=notes.length){c.isDone=true;c.done(o.ok)}else{els[i].classList.add('now');c.say('')}}
+      else{const e=els[i];e.classList.remove('shake');void e.offsetWidth;e.classList.add('shake');c.say(`Ara toca amb la mà ${notes[i]==='D'?'dreta (D)':'esquerra (E)'}.`,'bad')}};
+  }}},
+  card(title,text,o){return{title,text,run(c){
+    c.area.insertAdjacentHTML('beforeend',`<div class="lcard"><div class="cardimg">${cardHTML(o.id)}</div><div class="lcside"><button class="btn acc" data-act="pl">▶ Escolta</button>${o.opts?`<p class="qq">${o.q}</p><div class="actions">${o.opts.map(x=>`<button class="btn ghost" data-o="${x}">${x}</button>`).join('')}</div>`:''}</div></div>`);
+    let played=false;
+    c.area.onclick=e=>{const t=e.target.closest('button');if(!t)return;
+      if(t.dataset.act==='pl'){played=true;const ms=playCard(RC[o.id],$('.cardimg',c.area),{tempo:o.tempo||76});if(!o.opts&&!c.isDone){c.isDone=true;later(()=>c.done(o.ok),ms)}}
+      if(t.dataset.o!==undefined){if(c.isDone)return;if(!played){c.say('Primer escolta-la.','hint');return}
+        if(t.dataset.o===String(o.ans)){t.classList.add('right');c.isDone=true;c.done(o.ok)}else{t.classList.remove('wrong');void t.offsetWidth;t.classList.add('wrong');c.say(o.bad||'No. Mira la carta i escolta-la una altra vegada.','bad');Snd.no()}}};
+  }}},
+  pickcard(title,text,o){return{title,text,run(c){
+    c.area.insertAdjacentHTML('beforeend',`<div class="actions"><button class="btn acc" data-act="pl">▶ Escolta el dictat</button></div><div class="opts" style="--n:${o.opts.length}">${o.opts.map(id=>`<button class="card" data-id="${id}">${cardHTML(id)}</button>`).join('')}</div>`);
+    let played=false;
+    c.area.onclick=e=>{const t=e.target.closest('button');if(!t)return;
+      if(t.dataset.act==='pl'){played=true;playCard(RC[o.play],c.isDone?$(`[data-id="${o.play}"]`,c.area):null,{tempo:76})}
+      if(t.dataset.id){if(c.isDone){playCard(RC[t.dataset.id],t,{tempo:76,countIn:false});return}
+        if(!played){c.say('Primer escolta el dictat.','hint');return}
+        if(t.dataset.id===o.play){t.classList.add('ok');t.insertAdjacentHTML('beforeend','<span class="tag">Aquesta</span>');c.isDone=true;c.done(o.ok);later(()=>playCard(RC[o.play],t,{tempo:76}),400)}
+        else{t.classList.add('bad');if(!$('.tag',t))t.insertAdjacentHTML('beforeend','<span class="tag">No</span>');c.say('Aquesta no. Torna a escoltar i mira on hi ha els silencis.','bad');Snd.no()}}};
+  }}}
+};
+
+/* ================= temes (progressions) ================= */
+const CH=(pc,q,name)=>({pc,q,name});
+const PROG={
+  rock:[CH(9,'5','La5'),CH(5,'5','Fa5'),CH(0,'5','Do5'),CH(7,'5','Sol5')],
+  balada:[CH(0,'maj','Do'),CH(9,'min','La m'),CH(5,'maj','Fa'),CH(7,'maj','Sol')],
+  pop:[CH(0,'maj','Do'),CH(7,'maj','Sol'),CH(9,'min','La m'),CH(5,'maj','Fa')]
+};
+const SLOT={F:{semis:0,nom:'fonamental'},'5':{semis:7,alt:-5,nom:'5a'},'8':{semis:12,nom:'octava'},'3':{nom:'3a'}};
+const slotSemis=(k,q)=>k==='3'?(q==='min'?3:4):SLOT[k].semis;
+function autoShape(inst,ch,keys){const r=autoRoot(inst,ch.pc);const pos=[];keys.forEach(k=>{if(k==='F'){pos.push([r.s,r.f]);return}const p=nearPos(inst,r.m+slotSemis(k,ch.q),r);pos.push([p.s,p.f])});return{root:r,pos,midis:pos.map(([s,f])=>inst.tuning[s]+f)}}
+
+/* ================= lliçons ================= */
+const G=GTR,B=BAS;
+const LESSONS={
+  gR:[
+    S.fret('On són les fonamentals','Els power chords del tema tenen la fonamental a la <b>corda 6</b> o a la <b>corda 5</b>. Els punts del pal t\'hi orienten: a la corda 6, el punt del 5 és un <b>La</b>. Toca\'l.',{inst:G,at:[0,5],ok:'La. És el primer acord del tema: La5.'}),
+    S.fret('Més notes a la corda 6','Al punt del 3 hi ha el <b>Sol</b>, i al trast 1, el Fa. Toca el Sol.',{inst:G,at:[0,3],ok:'Corda 6: Fa al 1, Sol al 3, La al 5, Do al 8.'}),
+    S.fret('La corda 5','A la corda 5, el punt del 3 és un <b>Do</b> i el del 5, un Re. Toca el Do.',{inst:G,at:[1,3],ok:'Corda 5: Do al 3, Re al 5, Mi al 7.'}),
+    S.fret('Ara tu','El segon acord del tema és Fa5. Troba el <b>Fa</b> a la corda 6.',{inst:G,at:[0,1],ok:'Fa al trast 1.'})
+  ],
+  gP:[
+    S.fret('Ingredient 1: la 5a','Un power chord és la fonamental i la seva <b>5a</b>. La 5a és a la corda del costat (la més aguda), <b>2 trasts a la dreta</b>. Des del La, toca-la.',{inst:G,marks:[[0,5,'La']],at:[1,7],ok:'La i Mi: ja sona a power chord.',after:()=>Snd.power([45,52])}),
+    S.fret('Ingredient 2: l\'octava','Per fer-lo més gruixut, s\'hi afegeix l\'<b>octava</b>: 2 cordes més amunt, <b>al mateix trast que la 5a</b>.',{inst:G,marks:[[0,5,'La']],fixed:[[1,7,'5']],at:[2,7],ok:'La5 complet: fonamental, 5a i octava.',after:()=>Snd.power([45,52,57])}),
+    S.fret('La mateixa forma, a la corda 5','La forma no canvia: només la mous. Amb la fonamental <b>Do</b> a la corda 5, toca la 5a i l\'octava.',{inst:G,marks:[[1,3,'Do']],seq:[[2,5],[3,5]],seqMsg:()=>'Ara l\'octava: una corda més amunt, al mateix trast.',ok:'Do5.',after:()=>Snd.power([48,55,60])}),
+    S.info('Ja tens els ingredients','Tots els acords del tema són aquesta forma. Per tocar-lo només has de saber on és cada fonamental i moure-hi la forma.',{btns:[{label:'▶ La5',fn:()=>Snd.power([45,52,57])},{label:'▶ Fa5',fn:()=>Snd.power([41,48,53])},{label:'▶ Do5',fn:()=>Snd.power([48,55,60])},{label:'▶ Sol5',fn:()=>Snd.power([43,50,55])}]})
+  ],
+  g3:[
+    S.info('La 3a decideix el color','A la balada sonen Do, La m, Fa i Sol. Un acord major porta una <b>3a major</b>; un de menor, una <b>3a menor</b>. La guitarra els arpegia: fonamental, 3a, 5a i octava, una nota rere l\'altra.',{}),
+    S.fret('La 3a major','A la corda <b>més aguda</b>, <b>1 trast a l\'esquerra</b>. Des del Do, troba el Mi.',{inst:G,marks:[[1,3,'Do']],semis:4,ok:'Do – Mi: 3a major.',after:()=>Snd.pair(48,52)}),
+    S.fret('La 3a menor','Un trast més enllà: corda més aguda, <b>2 trasts a l\'esquerra</b>. Des del La, troba el Do (La m).',{inst:G,marks:[[0,5,'La']],semis:3,ok:'La – Do: 3a menor.',after:()=>Snd.pair(45,48)}),
+    S.info('Escolta la diferència','La 3a major sona més lluminosa; la menor, més fosca.',{mustListen:true,ok:'Aquesta nota és la que fa que un acord sigui major o menor.',btns:[{label:'▶ Do – Mi',fn:()=>Snd.pair(48,52)},{label:'▶ La – Do',fn:()=>Snd.pair(45,48)}]}),
+    S.fret('L\'arpegi de Do','Fonamental, 3a, 5a i octava: toca les quatre notes de l\'arpegi de Do, en ordre.',{inst:G,marks:[[1,3,'Do']],seq:[[2,2],[2,5],[3,5]],seqMsg:n=>n===2?'Ara la 5a: corda més aguda que la fonamental, 2 trasts a la dreta.':'Ara l\'octava: 2 cordes amunt de la fonamental, 2 trasts a la dreta.',ok:'Do – Mi – Sol – Do.',after:()=>[48,52,55,60].forEach((m,i)=>Snd.pluck(m,false,i*.3))})
+  ],
+  g2:[
+    S.fret('L\'octava per trobar notes','L\'octava també serveix per trobar notes de pressa. Aquí tens un Sol: troba\'n l\'octava (2 cordes amunt, 2 trasts a la dreta).',{inst:G,marks:[[0,3,'Sol']],semis:12,ok:'Exacte.'}),
+    S.fret('Compte: de la corda 3 a la 2','Quan la forma passa de la <b>corda 3 (Sol)</b> a la <b>corda 2 (Si)</b>, es mou un trast més. Des d\'aquest Mi de la corda 4, l\'octava queda 2 cordes amunt i <b>3 trasts</b> a la dreta.',{inst:G,marks:[[2,2,'Mi']],semis:12,ok:'Això és el de sempre: entre la 3a i la 2a, un trast més.'}),
+    S.fret('La 5a, cap avall','La 5a també és a la corda <b>més greu</b>, <b>al mateix trast</b>. Des d\'aquest Do, troba el Sol a la corda de sota.',{inst:G,marks:[[1,3,'Do']],at:[0,3],ok:'El mateix Sol, per sota del Do.'}),
+    S.fret('De la corda 3 a la 2, amb la 5a','Des del Re de la corda 3, la 5a cap amunt queda <b>3 trasts</b> a la dreta, a la corda 2.',{inst:G,marks:[[3,7,'Re']],semis:7,ok:'El trast de més de la corda 2.'}),
+    S.fret('La 4a, el mirall de la 5a','La 4a és al revés: corda <b>més aguda</b>, <b>al mateix trast</b>. Des del Do, troba el Fa.',{inst:G,marks:[[1,3,'Do']],semis:5,ok:'Do – Fa: una 4a.'})
+  ],
+  bR:[
+    S.fret('Quatre cordes','El baix té quatre cordes: Mi, La, Re, Sol, com les quatre més greus de la guitarra. Les fonamentals de la línia són a les <b>cordes 4 i 3</b>. Toca el <b>La</b> del trast 5 de la corda 4.',{inst:B,at:[0,5],ok:'La: la primera nota del tema.'}),
+    S.fret('Els punts del pal','A la corda 4: Fa al 1, Sol al 3, La al 5, Do al 8. Toca el <b>Fa</b>.',{inst:B,at:[0,1],ok:'Fa.'}),
+    S.fret('La corda 3','A la corda 3, el punt del 3 és un <b>Do</b> i el del 5, un Re. Toca el Do.',{inst:B,at:[1,3],ok:'Corda 3: Do al 3, Re al 5, Mi al 7.'}),
+    S.fret('El trast 5 = la corda següent','Toca el <b>trast 5</b> de la corda 4 i després la <b>corda 3 a l\'aire</b>. Sonen igual!',{inst:B,seq:[[0,5],[1,0]],seqMsg:()=>'Ara la corda 3 a l\'aire.',ok:'El mateix La. Així s\'afina el baix.'})
+  ],
+  bL:[
+    S.fret('Ingredient 1: la 5a','La 5a és a la corda <b>més aguda</b> del costat, <b>2 trasts a la dreta</b>. Des del La, toca-la.',{inst:B,marks:[[0,5,'La']],at:[1,7],ok:'La – Mi.',after:()=>Snd.pair(33,40,true)}),
+    S.fret('Ingredient 2: l\'octava','L\'octava: <b>2 cordes més amunt, al mateix trast que la 5a</b>.',{inst:B,marks:[[0,5,'La']],fixed:[[1,7,'5']],at:[2,7],ok:'La – Mi – La.',after:()=>[33,40,45,40].forEach((m,i)=>Snd.pluck(m,true,i*.35))}),
+    S.fret('La 5a, cap avall','La 5a també la tens a la corda <b>més greu</b>, <b>al mateix trast</b>. Des del Re, troba la 5a (un La) per sota.',{inst:B,marks:[[1,5,'Re']],at:[0,5],ok:'Exacte. Moltes línies baixen a la 5a per tornar a la fonamental.'}),
+    S.fret('El secret de la línia','La línia del tema fa sempre el mateix: <b>fonamental – 5a – octava – 5a</b>. Toca-la sobre el Do.',{inst:B,marks:[[1,3,'Do']],seq:[[2,5],[3,5],[2,5]],seqMsg:n=>n===2?'Ara l\'octava.':'I tornes a la 5a.',ok:'Aquesta forma és tota la línia: només la mous a cada acord.',after:()=>[36,43,48,43].forEach((m,i)=>Snd.pluck(m,true,i*.35))})
+  ],
+  b3:[
+    S.info('La 3a diu si és major o menor','Amb fonamental, 5a i octava la línia serveix per a qualsevol acord. Si hi poses la <b>3a</b>, la línia ja diu si l\'acord és major o menor.',{}),
+    S.fret('La 3a major','Corda <b>més aguda</b>, <b>1 trast a l\'esquerra</b>. Des del Do, troba el Mi.',{inst:B,marks:[[1,3,'Do']],semis:4,ok:'Do – Mi.',after:()=>Snd.pair(36,40,true)}),
+    S.fret('La 3a menor','Corda més aguda, <b>2 trasts a l\'esquerra</b>. Des del La, troba el Do.',{inst:B,marks:[[0,5,'La']],semis:3,ok:'La – Do: La menor.',after:()=>Snd.pair(33,36,true)}),
+    S.fret('Arpegi: F – 3 – 5 – 8','Toca la línia de Do: fonamental, 3a, 5a i octava.',{inst:B,marks:[[1,3,'Do']],seq:[[2,2],[2,5],[3,5]],seqMsg:n=>n===2?'Ara la 5a.':'Ara l\'octava.',ok:'Do – Mi – Sol – Do.',after:()=>[36,40,43,48].forEach((m,i)=>Snd.pluck(m,true,i*.35))})
+  ],
+  b2:[
+    S.fret('Salta d\'octava en octava','Truc per als reptes de temps: quan trobes una nota, salta a la seva octava. Troba els <b>quatre La</b> que hi ha entre el trast 0 i el 7.',{inst:B,all:[[0,5],[1,0],[2,7],[3,2]],ok:'Els quatre La.'})
+  ],
+  k1:[
+    S.keys('On és el Do?','El <b>Do</b> és la tecla blanca just a l\'esquerra del grup de <b>dues tecles negres</b>. Toca\'n un.',{target:{pc:0},bad:m=>`Això és un ${PC_NAME[mod(m,12)]}. Busca el grup de dues negres i la blanca de la seva esquerra.`,ok:'Do. A tot el teclat es repeteix igual.'}),
+    S.keys('Comptar semitons','Per comptar semitons, la nota on comences és el <b>0</b>. Després compta <b>totes</b> les tecles cap a la dreta, blanques i negres, sense saltar-ne cap. Des del Do, toca la tecla <b>4</b>.',{marks:[[60,'Do']],ruler:60,rulerN:7,target:{midi:64},bad:m=>m>60?`Aquesta és la tecla ${m-60}. Compta 1, 2, 3, 4.`:'Compta cap a la dreta des del Do marcat.',ok:'Mi: Do + 4 semitons.'}),
+    S.keys('Ara sense números','Des del Mi, compta <b>3 semitons</b> més.',{marks:[[60,'Do'],[64,'Mi']],target:{midi:67},bad:m=>m>64?`Has comptat ${m-64} des del Mi. En són 3.`:'Compta cap a la dreta des del Mi.',ok:'Sol. Do – Mi – Sol: el primer acord del tema.',after:()=>Snd.chord([60,64,67],true)})
+  ],
+  k2:[
+    S.info('La fórmula de l\'acord major','Comences a la <b>fonamental</b>, comptes <b>4</b> semitons i tens la segona nota. Des d\'aquí, <b>3</b> més i tens la tercera.',{html:formulaHTML(['Do','+4','Mi','+3','Sol']),btns:[{label:'▶ Do major',fn:()=>Snd.chord([60,64,67],true)}]}),
+    S.keys('Sol major','El segon acord del tema. Comença al Sol i aplica <b>+4 +3</b>. Els números blaus són els semitons des del Sol.',{formula:['Sol','+4','?','+3','?'],marks:[[55,'Sol']],ruler:55,rulerN:8,target:{pcs:[7,11,2]},ok:'Sol – Si – Re.'}),
+    S.keys('Fa major, sense números','L\'últim acord del tema. Fa, <b>+4 +3</b>.',{formula:['Fa','+4','?','+3','?'],marks:[[53,'Fa']],target:{pcs:[5,9,0]},ok:'Fa – La – Do.'})
+  ],
+  k3:[
+    S.info('L\'acord menor: 3 + 4','El tercer acord del tema és La m. Per fer un acord menor només canvia la primera passa: <b>3</b> semitons en comptes de 4.',{html:formulaHTML(['La','+3','Do','+4','Mi'])}),
+    S.keys('De major a menor','Aquí tens Do major. Baixa el Mi un semitò per fer-lo menor: toca el Mi per treure\'l i afegeix el Mib.',{pre:[60,64,67],marks:[[60,'Do']],target:{pcs:[0,3,7]},ok:'Do – Mib – Sol.'}),
+    S.info('Escolta la diferència','Major sona més lluminós; menor, més fosc.',{mustListen:true,ok:'Només canvia una nota.',btns:[{label:'▶ Do major',fn:()=>Snd.chord([60,64,67],true)},{label:'▶ Do menor',fn:()=>Snd.chord([60,63,67],true)}]}),
+    S.keys('La menor','Fonamental La: <b>+3 +4</b>.',{formula:['La','+3','?','+4','?'],marks:[[57,'La']],target:{pcs:[9,0,4]},ok:'La – Do – Mi. Ja tens els quatre acords del tema.'})
+  ],
+  k4:[
+    S.keys('Re major: una tecla negra','Comptant des del Re, el +4 cau en una <b>tecla negra</b>: el Fa#. Construeix Re major.',{formula:['Re','+4','?','+3','?'],marks:[[50,'Re']],ruler:50,rulerN:8,target:{pcs:[2,6,9]},ok:'Re – Fa# – La.'}),
+    S.keys('Mib major','Aquest comença en una tecla negra. Mib, <b>+4 +3</b>.',{formula:['Mib','+4','?','+3','?'],marks:[[51,'Mib']],target:{pcs:[3,7,10]},ok:'Mib – Sol – Sib.'})
+  ],
+  k5:[
+    S.keys('sus4','Canvia la 3a per la 4a: <b>+5 +2</b>. Construeix Do sus4.',{formula:['Do','+5','?','+2','?'],marks:[[60,'Do']],ruler:60,rulerN:8,target:{pcs:[0,5,7]},ok:'Do – Fa – Sol.'}),
+    S.keys('sus2','<b>+2 +5</b>. Construeix Re sus2.',{formula:['Re','+2','?','+5','?'],marks:[[50,'Re']],target:{pcs:[2,4,9]},ok:'Re – Mi – La.'}),
+    S.keys('Disminuït','Dues 3es menors: <b>+3 +3</b>. Construeix Si disminuït.',{formula:['Si','+3','?','+3','?'],marks:[[59,'Si']],target:{pcs:[11,2,5]},ok:'Si – Re – Fa.'}),
+    S.keys('Power chord (5)','Només fonamental i 5a: <b>+7</b>. Construeix Mi5.',{formula:['Mi','+7','?'],marks:[[52,'Mi']],target:{pcs:[4,11]},ok:'Mi – Si.'})
+  ],
+  k6:[
+    S.keys('Acord de 7a','Afegeix una quarta nota: <b>+4 +3 +3</b>. Construeix Sol7.',{formula:['Sol','+4','?','+3','?','+3','?'],marks:[[55,'Sol']],ruler:55,rulerN:11,target:{pcs:[7,11,2,5]},ok:'Sol – Si – Re – Fa.'}),
+    S.keys('maj7','<b>+4 +3 +4</b>. Construeix Do maj7.',{formula:['Do','+4','?','+3','?','+4','?'],marks:[[60,'Do']],target:{pcs:[0,4,7,11]},ok:'Do – Mi – Sol – Si.'}),
+    S.keys('m7','<b>+3 +4 +3</b>. Construeix La m7.',{formula:['La','+3','?','+4','?','+3','?'],marks:[[57,'La']],target:{pcs:[9,0,4,7]},ok:'La – Do – Mi – Sol.'})
+  ],
+  d1:[
+    S.taps('Les dues mans','<b>D</b> és la mà dreta i <b>E</b>, l\'esquerra. Toca els coixinets o fes servir les tecles <b>F</b> (esquerra) i <b>J</b> (dreta). Toca D i després E.',{seq:'D E',ok:'Ja les tens.'}),
+    S.taps('Cops simples','Alternes les mans. Toca <b>D E D E</b>.',{seq:'DEDE',ok:'Cops simples.'}),
+    S.taps('Cops dobles','Dos cops amb cada mà. Toca <b>D D E E</b>.',{seq:'DDEE',ok:'Cops dobles.'}),
+    S.info('Ara, a temps','Als reptes, primer sona una volta d\'exemple. Quan surt <b>«Ara tu!»</b>, toques tu seguint el cursor i el metrònom. Les caselles es pinten de verd quan encertes.',{})
+  ],
+  d2:[
+    S.taps('Pa-ra-di-ddle','Un paradiddle són dos cops simples i un de doble: <i>pa-ra-di-ddle</i>. Toca <b>D E D D</b>.',{seq:'DEDD',ok:'Primera meitat.'}),
+    S.taps('Ara amb l\'altra mà','Com que acaba amb un doble, la segona meitat comença amb l\'altra mà: <b>E D E E</b>.',{seq:'EDEE',ok:'Segona meitat.'}),
+    S.taps('Tot seguit','Toca el paradiddle sencer.',{seq:'DEDD EDEE',ok:'Paradiddle.'}),
+    S.info('L\'accent','El primer cop de cada grup porta <b>accent</b> (&gt;): fort i des d\'amunt. La resta, fluixos i a prop del pad.',{html:`<div class="patwrap"><div class="pat">${patHTML(drumNotes('DEDD EDEE',2),2)}</div></div>`,btns:[{label:'▶ Escolta-ho',fn:()=>{const c=Snd.ac();if(!c)return;const t=c.currentTime+.1,sp=60/70/2;drumNotes('DEDD EDEE',2).forEach((n,i)=>Snd.stick(t+i*sp,n.h,n.acc))}}]})
+  ],
+  t1:[
+    S.card('Un cercle, un temps','Cada <b>cercle</b> de la carta és un temps. Aquesta té 4 sons, un a cada temps. Abans sona un compàs de metrònom.',{id:'rhythm_binary_01',ok:'Quatre temps, quatre sons.'}),
+    S.card('El blanc és silenci','El cercle <b>blanc</b> és un silenci. A quin temps no sona res?',{id:'rhythm_binary_02',q:'Quin temps calla?',opts:[1,2,3,4],ans:3,ok:'El 3. El silenci també compta: el pols no s\'atura.'}),
+    S.card('Cercles partits','Un cercle partit en dos són <b>dos sons</b> dins d\'un temps.',{id:'rhythm_binary_13',q:'Quants sons té aquesta carta?',opts:[4,6,8],ans:8,ok:'Vuit: dos a cada temps.'}),
+    S.card('Sons llargs','Quan el dibuix s\'allarga, el so també s\'allarga.',{id:'rhythm_binary_05',q:'Quants sons sents?',opts:[1,2,4],ans:1,ok:'Un de sol, que dura tot el compàs.'}),
+    S.pickcard('El primer dictat','Escolta i tria quina carta ha sonat.',{play:'rhythm_binary_03',opts:['rhythm_binary_02','rhythm_binary_03'],ok:'Primer dictat fet.'})
+  ],
+  t2:[
+    S.card('Cartes de tres temps','Les cartes ternàries tenen <b>3 temps</b>, com un vals: u-dos-tres, u-dos-tres.',{id:'rhythm_ternary_01',tempo:90,ok:'Tres temps per compàs.'}),
+    S.card('Quants sons?','Mira i escolta aquesta carta ternària.',{id:'rhythm_ternary_05',q:'Quants sons té?',opts:[1,2,3],ans:1,tempo:90,ok:'Un so i dos temps de silenci.'}),
+    S.card('El temps partit en tres','Algunes cartes parteixen cada temps en <b>tres</b>.',{id:'rhythm_ternary_30',tempo:60,ok:'Tres sons per temps.'})
+  ]
+};
+
+/* ================= constructors (formes al pal i acords) ================= */
+const ROOTREF={false:'Punts de referència: corda 6 → Fa 1, Sol 3, La 5, Do 8 · corda 5 → Si 2, Do 3, Re 5, Mi 7.',true:'Punts de referència: corda 4 → Fa 1, Sol 3, La 5, Do 8 · corda 3 → Si 2, Do 3, Re 5, Mi 7.'};
+const strTxt=inst=>inst.bass?'4 o 3':'6 o 5';
+function shapeHint(k,ch,power){if(k==='5')return power?'La 5a: corda més aguda del costat, 2 trasts a la dreta.':'La 5a: corda més aguda, 2 trasts a la dreta; o corda més greu, al mateix trast.';if(k==='8')return"L'octava: 2 cordes més agudes, 2 trasts a la dreta.";return ch.q==='min'?"La 3a menor: corda més aguda, 2 trasts a l'esquerra.":"La 3a major: corda més aguda, 1 trast a l'esquerra."}
+function buildFret(host,inst,ch,keys,power,onDone){
+  host.insertAdjacentHTML('beforeend',`<div class="slots">${keys.map((k,i)=>`<span class="slot"><b>${k}</b><i></i></span>`).join('')}</div><div class="fbx"></div><p class="say"></p><div class="actions"><button class="btn ghost" data-b="hint">Pista</button></div>`);
+  const fb=new Fretboard($('.fbx',host),inst),say=mkSay($('.say',host)),slots=$$('.slot',host),hb=$('[data-b=hint]',host);
+  let i=0,root=null,hints=0,errors=0;const midis=[],pos=[];
+  const cur=()=>slots.forEach((s,j)=>s.classList.toggle('cur',j===i));
+  const task=()=>{const k=keys[i];say(i===0?`Toca la fonamental: un <b>${PC_NAME[ch.pc]}</b> a la corda ${strTxt(inst)}.`:`Ara ${k==='8'?"l'octava":k==='5'?'la 5a':`la 3a ${ch.q==='min'?'menor':'major'}`}.`)};
+  const accepts=(k,s,f)=>{const m=fb.midi(s,f);if(i===0)return fb.pc(s,f)===ch.pc&&s<=1;if(Math.abs(f-root.f)>4)return false;const sem=slotSemis(k,ch.q);return m===root.m+sem||(!power&&k==='5'&&m===root.m-5)};
+  cur();task();
+  fb.onCell=(s,f)=>{fb.play(s,f);if(i>=keys.length)return;const k=keys[i];
+    if(accepts(k,s,f)){if(i===0)root={s,f,m:fb.midi(s,f)};fb.unring();
+      fb.mark(s,f,i===0?'root':'ok',i===0?PC_NAME[ch.pc]:k);slots[i].classList.add('done');$('i',slots[i]).textContent=PC_NAME[fb.pc(s,f)];
+      midis.push(fb.midi(s,f));pos.push([s,f]);i++;hints=0;hb.disabled=false;hb.textContent='Pista';
+      if(i>=keys.length){cur();hb.hidden=true;onDone({midis,pos,clean:!errors,fb,say})}else{cur();task()}return}
+    errors++;Snd.no();
+    if(i===0&&fb.pc(s,f)===ch.pc){fb.flashBad(s,f,PC_NAME[ch.pc]);say(`És un ${PC_NAME[ch.pc]}, però busca'l a la corda ${strTxt(inst)}.`,'bad');return}
+    fb.flashBad(s,f,PC_NAME[fb.pc(s,f)]);say(`Això és un ${PC_NAME[fb.pc(s,f)]}. ${i===0?'Fes servir els punts del pal.':shapeHint(k,ch,power)}`,'bad')};
+  hb.onclick=()=>{if(i>=keys.length)return;hints++;errors++;const k=keys[i];
+    if(hints===1)say(i===0?ROOTREF[inst.bass]:shapeHint(k,ch,power),'hint');
+    else{let best=null;for(let s=0;s<fb.S;s++)for(let f=0;f<=12;f++)if(accepts(k,s,f)){const cst=i===0?Math.abs(f-5):Math.abs(f-root.f)+1.3*Math.abs(s-root.s);if(!best||cst<best.c)best={s,f,c:cst}}
+      if(best){fb.ring(best.s,best.f);say('És a la casella marcada.','hint')}hb.disabled=true}};
+}
+const CT={
+  maj:{iv:[[0,0],[4,2],[7,4]],ca:'major',us:''},min:{iv:[[0,0],[3,2],[7,4]],ca:'menor',us:'m'},dim:{iv:[[0,0],[3,2],[6,4]],ca:'disminuït',us:'dim'},
+  sus2:{iv:[[0,0],[2,1],[7,4]],ca:'sus2',us:'sus2'},sus4:{iv:[[0,0],[5,3],[7,4]],ca:'sus4',us:'sus4'},p5:{iv:[[0,0],[7,4]],ca:'5',us:'5'},
+  dom7:{iv:[[0,0],[4,2],[7,4],[10,6]],ca:'7',us:'7'},maj7:{iv:[[0,0],[4,2],[7,4],[11,6]],ca:'maj7',us:'maj7'},m7:{iv:[[0,0],[3,2],[7,4],[10,6]],ca:'m7',us:'m7'}
+};
+const ROOTS_NAT=[0,1,2,3,4,5,6].map(l=>({l,acc:0}));
+const ROOTS_ALL=[...ROOTS_NAT,{l:0,acc:1},{l:1,acc:-1},{l:2,acc:-1},{l:3,acc:1},{l:5,acc:-1},{l:6,acc:-1},{l:4,acc:1}];
+function chordOf(root,type){const T=CT[type];const notes=T.iv.map(([s,st])=>spellFrom(root,s,st));return{root,type,T,notes,pcs:notes.map(pcOf),ca:nm(root)+' '+T.ca,us:nm(root,true)+T.us}}
+const stepsOf=T=>{const s=T.iv.map(x=>x[0]);return s.slice(1).map((v,i)=>'+'+(v-s[i]))};
+function buildKeys(host,c,onDone){
+  host.insertAdjacentHTML('beforeend',`<div class="fx"></div><div class="kbx"></div><p class="say"></p><div class="actions"><button class="btn" data-b="check">Comprova</button><button class="btn ghost" data-b="hint">Pista</button><button class="btn ghost" data-b="listen">▶ Escolta</button></div>`);
+  const kb=new Keys($('.kbx',host),48,72),say=mkSay($('.say',host)),sel=new Set();let hints=0,checks=0,over=false;
+  const rootM=48+c.pcs[0]+(c.pcs[0]<4?12:0);
+  const paint=()=>{kb.reset('do');
+    if(hints>=2){for(let m=48;m<=72;m++)if(mod(m,12)===c.pcs[0])kb.mark(m,'rootk',nm(c.notes[0]));kb.mark(rootM,'',undefined,'0');kb.ruler(rootM,11)}
+    if(hints>=3){const have=new Set([...sel].map(x=>mod(x,12)));const i=c.pcs.findIndex((p,j)=>j>0&&!have.has(p));if(i>0)for(let m=48;m<=72;m++)if(mod(m,12)===c.pcs[i])kb.mark(m,'hintk',nm(c.notes[i]))}
+    sel.forEach(m=>kb.mark(m,'sel',PC_NAME[mod(m,12)]))};
+  kb.onKey=m=>{if(over){Snd.note(m);return}sel.has(m)?sel.delete(m):(sel.add(m),Snd.note(m));paint()};
+  host.addEventListener('click',e=>{const t=e.target.closest('[data-b]');if(!t||over&&t.dataset.b!=='listen')return;const a=t.dataset.b;
+    if(a==='listen'){if(sel.size)Snd.chord([...sel],false);else say('Tria alguna tecla per escoltar-la.');return}
+    if(a==='hint'){hints=Math.min(3,hints+1);paint();
+      if(hints===1){$('.fx',host).innerHTML=formulaHTML([nm(c.notes[0]),...stepsOf(c.T).flatMap(x=>[x,'?'])]);say(`<b>Pista 1.</b> Fórmula de l'acord ${c.T.ca}: des de la fonamental, ${stepsOf(c.T).join(', ')} semitons. Compten totes les tecles, blanques i negres.`,'hint')}
+      if(hints===2)say(`<b>Pista 2.</b> La fonamental és el <b>${nm(c.notes[0])}</b> (en groc). Els números blaus són els semitons des d'aquí.`,'hint');
+      if(hints===3)say('<b>Pista 3.</b> La tecla marcada en blau és una de les que falten.','hint');
+      t.textContent=hints<3?`Pista (${hints+1}/3)`:'Sense més pistes';t.disabled=hints>=3;return}
+    if(a==='check'){if(!sel.size){say('Encara no has triat cap tecla.','bad');return}checks++;
+      const have=new Set([...sel].map(x=>mod(x,12))),extra=[...have].filter(p=>!c.pcs.includes(p)),missing=c.pcs.filter(p=>!have.has(p));
+      paint();
+      if(!extra.length&&!missing.length){over=true;sel.forEach(m=>kb.mark(m,'ok',nm(c.notes[c.pcs.indexOf(mod(m,12))])));
+        const low=Math.min(...sel),inv=mod(low,12)!==c.pcs[0],clean=!hints&&checks===1;
+        say(`✓ ${c.ca}: <b>${c.notes.map(n=>nm(n)).join(' – ')}</b>.${inv?' Està invertit (no comença per la fonamental): també val.':''}`,'ok');
+        Snd.chord([...sel],true);$$('[data-b=check],[data-b=hint]',host).forEach(b=>b.hidden=true);onDone({midis:[...sel].sort((a,b)=>a-b),clean,say});return}
+      Snd.no();sel.forEach(m=>{if(extra.includes(mod(m,12)))kb.mark(m,'bad')});
+      const p=[];if(extra.length)p.push(`El ${extra.map(x=>PC_NAME[x]).join(' i el ')} no hi va.`);
+      if(missing.length)p.push(missing.length===c.pcs.length?'No hi ha cap nota de l\'acord.':`En falta${missing.length>1?'n':''} ${missing.length}.`);
+      if(missing.includes(c.pcs[0]))p.push('Comença per la fonamental.');
+      say(p.join(' '),'bad')}
+  });
+}
+const chOfProg=ch=>chordOf(ROOT_SP[ch.pc],ch.q==='min'?'min':ch.q==='5'?'p5':'maj');
+
+/* ================= reptes ================= */
+const IV={
+  '8a':{semis:12,steps:0,nom:'octava',curt:'8a',col:'var(--i8)',up:'2 cordes més agudes, 2 trasts a la dreta',down:'2 cordes més greus, 2 trasts a l\'esquerra'},
+  '5a':{semis:7,steps:4,nom:'5a',curt:'5a',col:'var(--i5)',up:'corda més aguda del costat, 2 trasts a la dreta',down:'corda més greu del costat, al mateix trast'},
+  '4a':{semis:5,steps:3,nom:'4a',curt:'4a',col:'var(--i4)',up:'corda més aguda del costat, al mateix trast',down:'corda més greu del costat, 2 trasts a l\'esquerra'},
+  '3M':{semis:4,steps:2,nom:'3a major',curt:'3M',col:'var(--i3M)',up:'corda més aguda del costat, 1 trast a l\'esquerra'},
+  '3m':{semis:3,steps:2,nom:'3a menor',curt:'3m',col:'var(--i3m)',up:'corda més aguda del costat, 2 trasts a l\'esquerra'}
+};
+const IV_ORDER=['8a','5a','4a','3M','3m'];
+const ivArt=I=>I.nom==='octava'?"l'octava":'la '+I.nom;
+let lastQ='';
+const nextBtn=(host,r,done)=>{if(r===2){later(()=>done(2),1400);return}const b=document.createElement('button');b.className='btn';b.dataset.a='next';b.textContent='Següent →';b.onclick=()=>done(r);host.appendChild(b);b.focus({preventScroll:true})};
+
+function qInterval(stage,cfg,g,done){
+  const inst=g.inst;
+  stage.insertAdjacentHTML('beforeend',`<div class="prompt"></div><div class="subq">A la vora de la fonamental, en una altra corda: com a molt 4 trasts de distància.</div><div class="fbx"></div><p class="say"></p><div class="actions"><button class="btn ghost" data-a="hint">Pista</button><button class="btn ghost" data-a="root">▶ Fonamental</button><button class="btn ghost" data-a="skip">Salta</button></div>`);
+  const fb=new Fretboard($('.fbx',stage),inst),say=mkSay($('.say',stage)),acts=$('.actions',stage);
+  let q;
+  for(let t=0;t<400;t++){
+    const s=pick(inst.bass?[0,1,2]:[0,1,2,3,4]),f=1+rand(9),pc=fb.pc(s,f);if(!LET_PC.includes(pc))continue;
+    const iv=pick(cfg.ivs),I=IV[iv],root={l:LET_PC.indexOf(pc),acc:0},tgt=spellFrom(root,I.semis,I.steps),tpc=mod(pc+I.semis,12);
+    if(awkward(tgt))continue;
+    const targets=fb.positions(tpc).filter(([a,b])=>Math.abs(b-f)<=4&&a!==s);
+    if(!targets.some(([a,b])=>fb.midi(a,b)>fb.midi(s,f)))continue;
+    const key=s+'-'+f+'-'+iv;if(key===lastQ)continue;lastQ=key;
+    q={s,f,pc,iv,I,root,tgt,tpc,targets,hints:0,errors:0};break;
+  }
+  const rn=nm(q.root),tn=nm(q.tgt),I=q.I,rm=fb.midi(q.s,q.f);
+  const big=()=>ivArt(I).replace(I.nom,'<b>'+I.nom+'</b>');
+  $('.prompt',stage).innerHTML=cfg.show==='name'?`Des del ${rn}, troba un ${q.iv==='8a'?'altre ':''}<b>${tn}</b>`:cfg.show==='interval'?`Des del ${rn}, troba ${big()}`:(q.iv==='8a'?`Troba l'<b>octava</b> del ${rn}`:`Troba ${big()} del ${rn}: un <b>${tn}</b>`);
+  fb.mark(q.s,q.f,'root',rn);fb.play(q.s,q.f);
+  const cost=([a,b])=>Math.abs(b-q.f)+1.3*Math.abs(a-q.s);
+  const bu=q.targets.filter(([a,b])=>fb.midi(a,b)>rm).sort((x,y)=>cost(x)-cost(y))[0],bd=q.targets.filter(([a,b])=>fb.midi(a,b)<rm).sort((x,y)=>cost(x)-cost(y))[0];
+  const finish=r=>{q.done=true;acts.innerHTML='';nextBtn(acts,r,done)};
+  fb.onCell=(s,f)=>{fb.play(s,f);if(q.done)return;
+    if(s===q.s&&f===q.f){say(`Aquesta és la fonamental, el ${rn}.`);return}
+    const pc=fb.pc(s,f);
+    if(pc===q.tpc&&s!==q.s&&Math.abs(f-q.f)<=4){
+      fb.unring();fb.mark(s,f,'ok',tn);const clean=!q.hints&&!q.errors,below=fb.midi(s,f)<rm;
+      say(`✓ ${tn} és ${ivArt(I)} del ${rn}${below?', cap avall':''}. Forma: <b>${shape(q.s,q.f,s,f)}</b>.`,'ok');Snd.ok();
+      later(()=>Snd.pluck(rm,inst.bass),350);later(()=>fb.play(s,f),750);finish(clean?2:1);return}
+    q.errors++;Snd.no();
+    if(pc===q.tpc){fb.flashBad(s,f,tn);say(`És un ${tn}, però el volem a la vora del ${rn} i en una altra corda. Fes servir la forma.`,'bad');return}
+    fb.flashBad(s,f,PC_NAME[pc]);
+    say(`Això és un <b>${PC_NAME[pc]}</b>. ${cfg.show==='name'?`Busques un ${tn}: quina distància hi ha des del ${rn}?`:`${ivArt(I).replace(/^./,x=>x.toUpperCase())}: ${I.up}${I.down?'; o '+I.down:''}.`}`,'bad')};
+  acts.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;const a=t.dataset.a;
+    if(a==='root')fb.play(q.s,q.f);
+    if(a==='skip'&&!q.done){q.done=true;done(0)}
+    if(a==='hint'&&!q.done){q.hints=Math.min(3,q.hints+1);
+      if(q.hints===1)say(`<b>Pista 1.</b> ${ivArt(I).replace(/^./,x=>x.toUpperCase())}: ${I.up}${I.down?`; o bé ${I.down}`:''}.${inst.bass?'':' Si passes entre la corda 3 i la 2, un trast més.'}`,'hint');
+      if(q.hints===2){const parts=[];if(bu)parts.push(`<b>${shape(q.s,q.f,bu[0],bu[1])}</b>${crossesGB(inst,q.s,bu[0])?' (passes de la corda 3 a la 2)':''}`);if(bd&&I.down)parts.push(`o bé <b>${shape(q.s,q.f,bd[0],bd[1])}</b>${crossesGB(inst,q.s,bd[0])?' (passes de la corda 2 a la 3)':''}`);say(`<b>Pista 2.</b> Des d'aquest ${rn}: ${parts.join(' ')}.`,'hint')}
+      if(q.hints===3){const b=bu||bd;fb.ring(b[0],b[1]);say('<b>Pista 3.</b> És a la casella marcada.','hint')}
+      t.textContent=q.hints<3?`Pista (${q.hints+1}/3)`:'Sense més pistes';t.disabled=q.hints>=3}});
+}
+function qRoot(stage,cfg,g,done){
+  const inst=g.inst;let pc;do{pc=pick(LET_PC)}while(String(pc)===lastQ);lastQ=String(pc);
+  stage.insertAdjacentHTML('beforeend',`<div class="prompt">Troba un <b>${PC_NAME[pc]}</b> a la corda ${strTxt(inst)}</div><div class="fbx"></div><p class="say"></p><div class="actions"><button class="btn ghost" data-a="hint">Pista</button><button class="btn ghost" data-a="skip">Salta</button></div>`);
+  const fb=new Fretboard($('.fbx',stage),inst),say=mkSay($('.say',stage)),acts=$('.actions',stage);let errors=0,hints=0,over=false;
+  fb.onCell=(s,f)=>{fb.play(s,f);if(over)return;
+    if(fb.pc(s,f)===pc&&s<=1){over=true;fb.unring();fb.mark(s,f,'ok',PC_NAME[pc]);say(`✓ ${PC_NAME[pc]}: corda ${inst.tuning.length-s}, trast ${f}.`,'ok');Snd.ok();acts.innerHTML='';nextBtn(acts,errors||hints?1:2,done);return}
+    errors++;Snd.no();fb.flashBad(s,f,PC_NAME[fb.pc(s,f)]);say(fb.pc(s,f)===pc?`És un ${PC_NAME[pc]}, però el volem a la corda ${strTxt(inst)}.`:`Això és un ${PC_NAME[fb.pc(s,f)]}.`,'bad')};
+  acts.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;
+    if(t.dataset.a==='skip'&&!over){over=true;done(0)}
+    if(t.dataset.a==='hint'&&!over){hints++;if(hints===1)say(ROOTREF[inst.bass],'hint');else{const p=autoRoot(inst,pc);fb.ring(p.s,p.f);say('És a la casella marcada.','hint');t.disabled=true}}});
+}
+function qShape(stage,cfg,g,done){
+  const inst=g.inst;let ch;do{const pc=pick(LET_PC),q=pick(cfg.qs);ch={pc,q,name:PC_NAME[pc]+(q==='5'?'5':q==='min'?' m':'')}}while(ch.name===lastQ);lastQ=ch.name;
+  const power=cfg.mode==='power';
+  stage.insertAdjacentHTML('beforeend',`<div class="prompt">${power?`Munta <b>${ch.name}</b>`:`Línia de <b>${ch.name}</b>: ${cfg.keys.join(' – ')}`}</div><div class="bx"></div><div class="actions skipbox"><button class="btn ghost" data-a="skip">Salta</button></div>`);
+  let over=false;const sk=$('.skipbox',stage);
+  sk.onclick=e=>{if(e.target.closest('[data-a=skip]')&&!over){over=true;done(0)}};
+  buildFret($('.bx',stage),inst,ch,cfg.keys,power,r=>{over=true;sk.innerHTML='';
+    if(power)Snd.power(r.midis);else{const c=Snd.ac();if(c)r.midis.forEach((m,i)=>Snd.pluckAt(m,inst.bass,c.currentTime+.05+i*.38,1,.5))}
+    r.say(power?`✓ ${ch.name}: fonamental, 5a i octava.`:`✓ Línia de ${ch.name}.`,'ok');nextBtn(sk,r.clean?2:1,done)});
+}
+function qCrono(stage,cfg,g,done){
+  const inst=g.inst;let pc;
+  do{pc=cfg.notes==='nat'?pick(LET_PC):rand(12)}while(String(pc)===lastQ);lastQ=String(pc);
+  stage.insertAdjacentHTML('beforeend',`<div class="prompt"></div><div class="timebar"><i></i></div><div class="fbx"></div><p class="say"></p><div class="actions"><button class="btn ghost" data-a="skip">Salta</button></div><div class="overlay"><div><div class="kicker">TROBA</div><div class="big"></div></div></div>`);
+  const fb=new Fretboard($('.fbx',stage),inst),say=mkSay($('.say',stage)),acts=$('.actions',stage);
+  const all=fb.positions(pc),goal=cfg.qty==='all'?all.length:Math.min(cfg.qty,all.length),name=PC_NAME[pc];
+  $('.prompt',stage).innerHTML=`Troba ${cfg.qty==='all'?`<b>tots els ${name}</b> (${goal})`:`<b>${goal} ${name}</b>`} en ${cfg.time} s`;
+  $('.overlay .big',stage).textContent=`${cfg.qty==='all'?'tots els':goal} ${name}`;
+  const found=new Set();let errors=0,t0=0,raf=0,over=false;
+  const stop=()=>{over=true;cancelAnimationFrame(raf)};onCleanup(stop);
+  const bar=$('.timebar',stage);
+  const tick=()=>{if(over)return;const el=performance.now()-t0,r=Math.max(0,1-el/(cfg.time*1000));$('i',bar).style.transform=`scaleX(${r})`;bar.classList.toggle('low',r<.25);if(r<=0){end(false);return}raf=requestAnimationFrame(tick)};
+  later(()=>{const o=$('.overlay',stage);o&&o.remove();t0=performance.now();Snd.pluck(inst.tuning[0]+mod(pc-inst.tuning[0],12),inst.bass);tick()},1300);
+  const end=ok=>{stop();const el=(performance.now()-t0)/1000;acts.innerHTML='';
+    if(ok){say(`✓ ${goal} ${name} en <b>${el.toFixed(1)} s</b>${errors?` (${errors} clic${errors>1?'s':''} en una altra nota)`:''}.`,'ok');Snd.ok();nextBtn(acts,errors?1:2,done)}
+    else{all.forEach(([s,f])=>{if(!found.has(s+'-'+f))fb.mark(s,f,'miss',name,'rgba(0,0,0,.4)')});
+      say(`S'ha acabat el temps: ${found.size} de ${goal}. Els que faltaven són marcats en vermell.`,'bad');Snd.no();nextBtn(acts,0,done)}};
+  fb.onCell=(s,f)=>{fb.play(s,f);if(over||!t0)return;const k=s+'-'+f;if(found.has(k))return;
+    if(fb.pc(s,f)===pc){found.add(k);fb.mark(s,f,'ok',name);say(`${found.size} de ${goal}`,'ok');if(found.size>=goal)end(true)}
+    else{errors++;fb.flashBad(s,f,PC_NAME[fb.pc(s,f)]);say(`Això és un ${PC_NAME[fb.pc(s,f)]}.`,'bad')}};
+  acts.addEventListener('click',e=>{const t=e.target.closest('[data-a=skip]');if(t&&!over){stop();done(0)}});
+}
+function qChord(stage,cfg,g,done){
+  let c;for(let t=0;t<200;t++){c=chordOf(pick(cfg.roots),pick(cfg.types));if(c.notes.some(awkward)||c.ca===lastQ)continue;break}lastQ=c.ca;
+  const us=Store.get('us',false);
+  stage.insertAdjacentHTML('beforeend',`<div class="prompt">Construeix <b>${us?c.us:c.ca}</b> <span class="subq">(${us?c.ca:c.us})</span></div><div class="bx"></div><div class="actions skipbox"><button class="btn ghost" data-a="skip">Salta</button></div>`);
+  let over=false;const sk=$('.skipbox',stage);sk.onclick=e=>{if(e.target.closest('[data-a=skip]')&&!over){over=true;done(0)}};
+  buildKeys($('.bx',stage),c,r=>{over=true;sk.innerHTML='';nextBtn(sk,r.clean?2:1,done)});
+}
+const DL={
+  1:{f:c=>c.m==='b'&&c.sub.every(s=>s===1),opts:3},2:{f:c=>c.m==='b'&&c.sub.every(s=>s<=2)&&c.sub.includes(2),opts:4},3:{f:c=>c.m==='b'&&c.sub.includes(4),opts:3},
+  4:{f:c=>c.m==='t'&&c.beats===3&&c.sub.every(s=>s<=2),opts:4},5:{f:c=>c.m==='t'&&c.sub.includes(3),opts:3},6:{f:c=>true,opts:4}
+};
+function qDictat(stage,cfg,g,done,opt){
+  const L=DL[cfg.lv],pool=RCL.filter(L.f);let target;
+  for(let i=0;i<20;i++){target=pick(pool);if(target.sig!==lastQ)break}lastQ=target.sig;
+  const seen=new Set([target.sig]),dis=[];
+  const add=list=>{for(const c of shuffle(list)){if(dis.length>=L.opts-1)break;if(c.beats!==target.beats||c.m!==target.m||seen.has(c.sig))continue;seen.add(c.sig);dis.push(c)}};
+  add(pool);add(RCL);
+  const cards=shuffle([target,...dis]);let errors=0,over=false;
+  stage.insertAdjacentHTML('beforeend',`<div class="prompt">Quina carta ha sonat?</div><div class="actions acts"><button class="btn acc" data-a="play">▶ Escolta el dictat</button><button class="btn ghost" data-a="skip">Salta</button></div><div class="opts" style="--n:${cards.length}">${cards.map((c,i)=>`<button class="card" data-c="${i}">${cardHTML(c.id)}</button>`).join('')}</div><p class="say"></p>`);
+  const say=mkSay($('.say',stage)),opts={tempo:opt.tempo,met:true},acts=$('.acts',stage);
+  later(()=>playCard(target,null,opts),500);
+  stage.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.a==='play')playCard(target,over?$('.card.ok',stage):null,opts);
+    if(t.dataset.a==='skip'&&!over){over=true;done(0)}
+    if(t.dataset.a==='wrong'){const w=stage._wrong;if(w)playCard(w.c,w.el,opts)}
+    if(t.dataset.c!==undefined){const c=cards[+t.dataset.c];
+      if(over){playCard(c,t,{...opts,countIn:false});return}
+      if(c.sig===target.sig){over=true;t.classList.add('ok');t.insertAdjacentHTML('beforeend','<span class="tag">Aquesta</span>');Snd.ok();
+        say(`✓ ${errors?'Ara sí.':'Ben escoltat.'} Mira com avança el pols mentre sona.`,'ok');$('[data-a=skip]',stage).remove();
+        later(()=>playCard(target,t,opts),500);
+        const nb=document.createElement('button');nb.className='btn';nb.dataset.a='next';nb.textContent='Següent →';nb.onclick=()=>done(errors?1:2);acts.appendChild(nb)}
+      else{errors++;t.classList.add('bad');if(!$('.tag',t))t.insertAdjacentHTML('beforeend','<span class="tag">No</span>');Snd.no();stage._wrong={c,el:t};
+        say(`Aquesta no és. <button class="btn ghost sm" data-a="wrong">▶ Com sona la que has triat</button> Compara-la amb el dictat.`,'bad')}}});
+}
+function qDrum(stage,cfg,g,done,opt){
+  const sub=cfg.sub,notes=drumNotes(cfg.seq,sub),per=sub*4,L=notes.length,tempo=opt.tempo;
+  stage.insertAdjacentHTML('beforeend',`<div class="banner">Primer escolta una volta. Després toques tu.</div><div class="patwrap"><div class="pat">${patHTML(notes,sub)}</div></div><div class="actions goact" style="justify-content:center"><button class="btn acc big" data-a="go">▶ Comença</button></div><div class="padsbox"></div>`);
+  const els=$$('.stk',stage),banner=$('.banner',stage),pads=new Pads($('.padsbox',stage));
+  const exp=[];let extras=0,judging=false,curLp=-1;
+  pads.onHit=(h,now)=>{if(!judging)return;const c=Snd.ctx,lat=(c.outputLatency||0)+(c.baseLatency||0),tt=now-lat;let best=null,bd=1;
+    for(const e of exp){if(e.hit)continue;const d=Math.abs(tt-e.t);if(d<bd){bd=d;best=e}}
+    if(best&&bd<.17){best.hit=true;best.ok=best.h===h;best.dt=tt-best.t;if(best.lp===curLp)els[best.i].classList.add(best.ok?'good':'wh')}else extras++};
+  $('[data-a=go]',stage).onclick=()=>{$('.goact',stage).remove();start()};
+  function start(){
+    const c=Snd.ac();if(!c)return;const end=Snd.session();onCleanup(end);
+    const spb=60/tempo/sub,t=c.currentTime+.2,q=[];
+    for(let k=0;k<4;k++){Snd.click(t+k*sub*spb,k===0);q.push({t:t+k*sub*spb,ci:k+1})}
+    const t0=t+per*spb,loops=3;
+    for(let lp=0;lp<loops;lp++)for(let i=0;i<L;i++){const tt=t0+(lp*L+i)*spb,n=notes[i];
+      if(lp===0)Snd.stick(tt,n.h,n.acc);if(i%sub===0)Snd.click(tt,i%per===0);
+      if(lp>0)exp.push({t:tt,h:n.h,i,lp,hit:false});q.push({t:tt,i,lp})}
+    const fin=t0+loops*L*spb;let raf;
+    const tick=()=>{const now=c.currentTime;
+      while(q.length&&q[0].t<=now){const e=q.shift();if(e.ci){banner.textContent=e.ci+'…';continue}
+        els.forEach(x=>x.classList.remove('now'));els[e.i].classList.add('now');
+        if(e.i===0){curLp=e.lp;if(e.lp===0)banner.textContent='Escolta…';else{banner.textContent=e.lp===1?'Ara tu':'Una altra volta';banner.classList.remove('go');void banner.offsetWidth;banner.classList.add('go');els.forEach(x=>x.classList.remove('good','wh','miss'))}}
+        if(e.lp===0&&e.i===L-sub)banner.textContent='Prepara\'t…'}
+      judging=now>=t0+L*spb-.17;
+      exp.forEach(x=>{if(!x.hit&&!x.missed&&now>x.t+.17){x.missed=true;if(x.lp===curLp)els[x.i].classList.add('miss')}});
+      if(now>fin+.25){finish();return}raf=requestAnimationFrame(tick)};
+    raf=requestAnimationFrame(tick);onCleanup(()=>cancelAnimationFrame(raf));
+  }
+  function finish(){
+    judging=false;els.forEach(x=>x.classList.remove('now'));
+    const good=exp.filter(e=>e.hit&&e.ok),wh=exp.filter(e=>e.hit&&!e.ok).length,score=Math.max(0,good.length-extras*.5)/exp.length;
+    const avg=good.length?good.reduce((a,e)=>a+e.dt,0)/good.length:0;
+    const tips=[];if(wh)tips.push(`${wh} cop${wh>1?'s':''} amb la mà equivocada.`);if(extras)tips.push(`${extras} cop${extras>1?'s':''} de més.`);
+    if(good.length>4&&avg>.045)tips.push('Tendeixes a anar una mica tard: escolta el metrònom.');if(good.length>4&&avg<-.045)tips.push('Tendeixes a avançar-te: espera el clic.');
+    done(score,{pct:Math.round(good.length/exp.length*100),tips,line:'dels cops a temps i amb la mà correcta'});
+  }
+}
+
+/* ================= escolta el tema ================= */
+function demoParts(g,tema,user){
+  const prog=tema.prog,inst=g.inst;
+  if(tema.part==='power'){const shapes=user||prog.map(ch=>autoShape(GTR,ch,['F','5','8']).midis);return{style:'rock',bass:'root',gtr:{kind:'power',notes:ci=>shapes[ci]}}}
+  if(tema.part==='arp'){const sh=user||prog.map(ch=>autoShape(GTR,ch,tema.keys).midis);return{style:'ballad',bass:'root',gtr:{kind:'arp',notes:ci=>sh[ci]},keys:'auto',keysVol:.06}}
+  if(tema.part==='line'){const sh=user||prog.map(ch=>autoShape(BAS,ch,tema.keys).midis);return{style:tema.style||'rock',bass:ci=>sh[ci],...(tema.style==='ballad'?{keys:'auto',keysVol:.09}:{gtr:{kind:'power',notes:ci=>gtrAuto(prog[ci].pc),vol:.55}})}}
+  if(tema.part==='keys'){const sh=user||prog.map(keysVoicing);return{style:'ballad',bass:'root',keys:ci=>sh[ci],keysVol:.16}}
+  return{style:'rock',bass:'root'};
+}
+function runListen(gid,idx){
+  const g=GAMES[gid],node=FLAT[gid][idx],tema=node.tema;
+  const sc=screen(hud(g,node.nom,1)+`<div class="stage" style="--g:${g.col}"><span class="kicker">TEMA ${tema.n} · ESCOLTA</span><h2>${tema.nom}</h2><p class="ltext">${node.text}</p><div class="prog">${tema.prog.map((c,i)=>`<span data-c="${i}">${c.name}</span>`).join('')}</div><div class="vis"></div>${node.legend?`<div class="legend">${node.legend}</div>`:''}<div class="actions"><button class="btn acc big" data-a="play">▶ Escolta el tema</button><span class="subq cnt"></span></div><div><p class="kicker" style="margin:0 0 8px">PER TOCAR-HO NECESSITES</p><ul class="needs">${node.needs.map((n,i)=>`<li data-n="${String(i+1).padStart(2,'0')}"><span>${n}</span></li>`).join('')}</ul></div><div class="lfoot"><button class="btn" data-act="cont" disabled>Continua →</button></div></div>`);
+  const vis=$('.vis',sc),chips=$$('.prog span',sc),cnt=$('.cnt',sc),cont=$('[data-act=cont]',sc);
+  let fb=null,kb=null,shapes;
+  if(tema.part==='keys'){kb=new Keys(vis,48,72);shapes=tema.prog.map(keysVoicing)}
+  else{const inst=tema.part==='line'?BAS:GTR;fb=new Fretboard(vis,inst);const keys=tema.part==='power'?['F','5','8']:tema.keys;shapes=tema.prog.map(ch=>autoShape(inst,ch,keys));shapes.keys=keys}
+  const showChord=(ci,beat)=>{chips.forEach((c,i)=>c.classList.toggle('on',i===ci));
+    if(kb){kb.reset('do');shapes[ci].forEach(m=>kb.mark(m,'ex',PC_NAME[mod(m,12)]))}
+    else{fb.clear();const sh=shapes[ci];sh.pos.forEach(([s,f],k)=>fb.mark(s,f,k===0?'root':'ghost',shapes.keys[k]));
+      if(tema.part!=='power'&&beat>=0){const k=tema.part==='arp'?[0,1,2,3,2,1,0,1][beat*2]:beat;const [s,f]=sh.pos[Math.min(k,sh.pos.length-1)];fb.c(s,f).classList.add('lit');if(k===0)fb.c(s,f).classList.add('fr')}
+      if(tema.part==='power'&&beat>=0)sh.pos.forEach(([s,f])=>fb.c(s,f).classList.add('lit'))}};
+  showChord(0,-1);
+  const play=()=>{const parts=demoParts(g,tema);
+    bandPlay({bpm:tema.bpm,prog:tema.prog,loops:2,parts,
+      onBeat:(ci,b)=>{if(ci<0){cnt.textContent=`Compte: ${b+1}`;return}cnt.textContent='';showChord(ci,b);if(tema.part==='power')later(()=>{if(fb)$$('.lit',fb.el).forEach(x=>x.classList.remove('lit'))},120)},
+      onEnd:()=>{cont.disabled=false;chips.forEach(c=>c.classList.remove('on'));$('[data-a=play]',sc).textContent='▶ Torna a escoltar'}})};
+  sc.addEventListener('click',e=>{const t=e.target.closest('[data-a],[data-act]');if(!t)return;
+    if(t.dataset.a==='play'){if(bandStop){bandStop();t.textContent='▶ Escolta el tema';return}t.textContent='■ Atura';play()}
+    if(t.dataset.act==='map'){renderMap(gid)}
+    if(t.dataset.act==='cont'&&!t.disabled){P.set(gid,node.id,{done:true});startNode(gid,idx+1)}});
+}
+
+/* ================= toca amb la banda ================= */
+function runJam2(gid,idx){
+  const g=GAMES[gid],node=FLAT[gid][idx],tema=node.tema,prog=tema.prog,N=prog.length;
+  const isKeys=tema.part==='keys',inst=tema.part==='line'?BAS:GTR,keys=tema.part==='power'?['F','5','8']:tema.keys;
+  const sc=screen(hud(g,node.nom,N)+`<div class="stage" style="--g:${g.col}"></div>`);let stage=$('.stage',sc);
+  sc.addEventListener('click',e=>{if(e.target.closest('[data-act=map]'))renderMap(gid)});
+  stage.innerHTML=`<div class="splash"><span class="kicker">TEMA ${tema.n} · TOCA AMB LA BANDA</span><h2>${tema.nom}</h2><p>${node.text}</p><div class="prog">${prog.map(c=>`<span>${c.name}</span>`).join('')}</div><button class="btn acc big" data-a="start">Comença</button></div>`;
+  const res=[],user=[],jamPos=[];let i=0;
+  const step=()=>{setPips(sc,i,res.map(r=>r?'net':'aj'));
+    const st=document.createElement('div');st.className='stage screen';st.style.setProperty('--g',g.col);stage.replaceWith(st);stage=st;
+    if(i>=N){finale();return}
+    const ch=prog[i];
+    st.innerHTML=`<span class="kicker">ACORD ${i+1} DE ${N}</span><div class="prog">${prog.map((c,k)=>`<span class="${k<i?'done':k===i?'on':''}">${c.name}</span>`).join('')}</div><div class="prompt">${isKeys?`Construeix <b>${ch.name}</b>`:tema.part==='power'?`Munta <b>${ch.name}</b>`:`Notes de <b>${ch.name}</b>: ${keys.join(' – ')}`}</div><div class="bx"></div><div class="actions nx"></div>`;
+    const fin=r=>{res.push(r.clean);user.push(r.midis);if(r.pos)jamPos.push(r.pos);
+      if(tema.part==='power')Snd.power(r.midis);else if(!isKeys){const c=Snd.ac();if(c)r.midis.forEach((m,k)=>Snd.pluckAt(m,inst.bass,c.currentTime+.05+k*.35,1,.5))}
+      r.say(`✓ ${ch.name} a punt.`,'ok');i++;
+      const b=document.createElement('button');b.className='btn';b.dataset.a='next';b.textContent=i<N?`Següent: ${prog[i].name} →`:'A tocar amb la banda →';b.onclick=step;$('.nx',st).appendChild(b);b.focus({preventScroll:true})};
+    if(isKeys)buildKeys($('.bx',st),chOfProg(ch),fin);else buildFret($('.bx',st),inst,ch,keys,tema.part==='power',fin);
+  };
+  const finale=()=>{setPips(sc,N,res.map(r=>r?'net':'aj'));
+    const net=res.filter(Boolean).length,score=(net+(N-net)*.5)/N;
+    stage.innerHTML=`<span class="kicker">TEMA ${tema.n} · AMB LA BANDA</span><h2>Ara sona el que has muntat</h2><p class="ltext">La banda toca el tema i ${isKeys?'el teclat':tema.part==='line'?'el baix':'la guitarra'} fa servir exactament les notes que has triat.</p><div class="prog">${prog.map(c=>`<span>${c.name}</span>`).join('')}</div><div class="vis"></div><div class="actions"><button class="btn acc big" data-a="play">▶ Toca amb la banda</button><button class="btn ghost" data-a="end">Acaba</button></div>`;
+    const chips=$$('.prog span',stage),vis=$('.vis',stage);let fb=null,kb=null;
+    if(isKeys)kb=new Keys(vis,48,72);else fb=new Fretboard(vis,inst);
+    const show=(ci,b)=>{chips.forEach((c,k)=>c.classList.toggle('on',k===ci));
+      if(kb){kb.reset('do');user[ci].forEach(m=>kb.mark(m,'ex',PC_NAME[mod(m,12)]))}
+      else{fb.clear();const pos=jamPos[ci];pos.forEach(([s,f],k)=>fb.mark(s,f,k===0?'root':'ghost',keys[k]));
+        if(b>=0){if(tema.part==='power')pos.forEach(([s,f])=>fb.c(s,f).classList.add('lit'));else{const k=tema.part==='arp'?[0,1,2,3,2,1,0,1][b*2]:b;const [s,f]=pos[Math.min(k,pos.length-1)];fb.c(s,f).classList.add('lit')}}}};
+    show(0,-1);
+    stage.onclick=e=>{const t=e.target.closest('[data-a]');if(!t)return;
+      if(t.dataset.a==='play'){if(bandStop){bandStop();t.textContent='▶ Toca amb la banda';return}t.textContent='■ Atura';
+        bandPlay({bpm:tema.bpm,prog,loops:2,parts:demoParts(g,tema,user),onBeat:(ci,b)=>{if(ci>=0)show(ci,b)},onEnd:()=>{t.textContent='▶ Torna-ho a tocar';chips.forEach(c=>c.classList.remove('on'))}})}
+      if(t.dataset.a==='end'){if(bandStop)bandStop();showResults(gid,idx,score,res.map(r=>r?2:1),{pct:Math.round(score*100),line:`${net} de ${N} acords muntats sense ajuda`,tips:[]})}};
+  };
+  stage.onclick=e=>{if(e.target.closest('[data-a=start]')){Snd.ac();step()}};
+}
+
+/* ================= tallers lliures ================= */
+function freeFret(stage,g){
+  const inst=g.inst;let root={s:1,f:3};const on=new Set(IV_ORDER);let labels='iv';
+  stage.insertAdjacentHTML('beforeend',`<div class="prompt"></div><div class="subq">Toca qualsevol casella per fer-la fonamental. Les més transparents queden per sota.</div><div class="chips">${IV_ORDER.map(k=>`<button class="chip" data-iv="${k}" aria-pressed="true"><span class="sw" style="background:${IV[k].col}"></span>${IV[k].nom}</button>`).join('')}</div><label class="tog"><input type="checkbox" id="exnames"> Mostra el nom de les notes</label><div class="fbx"></div><p class="say"></p>`);
+  const fb=new Fretboard($('.fbx',stage),inst),say=mkSay($('.say',stage));
+  const draw=()=>{fb.clear();const {s,f}=root,rpc=fb.pc(s,f),rsp=ROOT_SP[rpc],rm=fb.midi(s,f);
+    $('.prompt',stage).innerHTML=`Fonamental: <b>${nm(rsp)}</b>`;fb.mark(s,f,'root',nm(rsp));
+    for(let s2=0;s2<fb.S;s2++)for(let f2=0;f2<=12;f2++){if(s2===s||Math.abs(f2-f)>4)continue;const d=mod(fb.pc(s2,f2)-rpc,12);
+      for(const k of IV_ORDER){if(!on.has(k)||mod(IV[k].semis,12)!==d)continue;const I=IV[k];fb.mark(s2,f2,fb.midi(s2,f2)<rm?'below':'',labels==='iv'?I.curt:nm(spellFrom(rsp,I.semis,I.steps)),I.col)}}
+    say(IV_ORDER.filter(k=>on.has(k)).map(k=>`${IV[k].nom}: <b>${nm(spellFrom(rsp,IV[k].semis,IV[k].steps))}</b>`).join(' · '))};
+  fb.onCell=(s,f)=>{root={s,f};fb.play(s,f);draw()};
+  stage.addEventListener('click',e=>{const t=e.target.closest('[data-iv]');if(!t)return;const k=t.dataset.iv;on.has(k)?on.delete(k):on.add(k);t.setAttribute('aria-pressed',on.has(k));draw()});
+  $('#exnames',stage).onchange=e=>{labels=e.target.checked?'nm':'iv';draw()};
+  draw();
+}
+function freeChord(stage){
+  let root={l:0,acc:0},type='maj';
+  stage.insertAdjacentHTML('beforeend',`<div class="row"><label>Fonamental <select id="exroot">${ROOTS_ALL.map((r,i)=>`<option value="${i}">${nm(r)} (${nm(r,true)})</option>`).join('')}</select></label><label>Tipus <select id="extype">${Object.keys(CT).map(t=>`<option value="${t}">${CT[t].ca} (C${CT[t].us})</option>`).join('')}</select></label><button class="btn acc sm" data-a="hear">▶ Escolta</button></div><div class="prompt"></div><div class="fx"></div><div class="kbx"></div><p class="subq">Toca una tecla per canviar la fonamental. Els números blaus són els semitons des de la fonamental.</p>`);
+  const kb=new Keys($('.kbx',stage),48,72);
+  const ms=()=>{const c=chordOf(root,type),base=48+pcOf(root);return c.T.iv.map(([s])=>base+s)};
+  const draw=()=>{const c=chordOf(root,type);kb.reset('do');const m=ms();kb.ruler(m[0],m[m.length-1]-m[0]);kb.mark(m[0],'',undefined,'0');m.forEach((x,i)=>kb.mark(x,'ex',nm(c.notes[i])));
+    $('.prompt',stage).innerHTML=`<b>${c.ca}</b> <span class="subq">(${c.us})</span>`;
+    $('.fx',stage).innerHTML=formulaHTML(c.notes.flatMap((n,i)=>i?[stepsOf(c.T)[i-1],nm(n)]:[nm(n)]))};
+  kb.onKey=m=>{root=ROOT_SP[mod(m,12)];const ix=ROOTS_ALL.findIndex(r=>pcOf(r)===mod(m,12));if(ix>=0)$('#exroot',stage).value=String(ix);draw();Snd.chord(ms(),false)};
+  $('#exroot',stage).onchange=e=>{root=ROOTS_ALL[+e.target.value];draw()};
+  $('#extype',stage).onchange=e=>{type=e.target.value;draw()};
+  stage.addEventListener('click',e=>{if(e.target.closest('[data-a=hear]'))Snd.chord(ms(),true)});
+  draw();
+}
+const RUD=[
+  {id:'rand',nom:'Aleatori',gen:true,sub:4},{id:'para',nom:'Paradiddle',seq:'DEDD EDEE',sub:4},{id:'simple',nom:'Cops simples',seq:'DEDE',sub:4},
+  {id:'doble',nom:'Cops dobles',seq:'DDEE',sub:4},{id:'inv',nom:'Paradiddle invertit',seq:'DEED EDDE',sub:4},{id:'rev',nom:'Paradiddle revers',seq:'DDED EEDE',sub:4},
+  {id:'dpara',nom:'Doble paradiddle',seq:'DEDEDD EDEDEE',sub:3},{id:'tpara',nom:'Triple paradiddle',seq:'DEDEDEDD EDEDEDEE',sub:4},{id:'pdd',nom:'Paradiddle-diddle',seq:'DEDDEE DEDDEE',sub:3}
+];
+const CELLS={facil:['DEDE','DDEE','DEDD','EDEE'],mitja:['DEDE','EDED','DDEE','EEDD','DEDD','EDEE','DEED','EDDE','DDED','EEDE']};
+function freeDrum(stage){
+  let rud=Store.get('gen-rud','rand'),tempo=Store.get('gen-tempo',70),diff='facil',bars=1;const o={accent:true,sound:true,met:true,kick:false,hide:false};
+  let notes,sub,groups,playing=false,timer,raf,step,next,queue=[],end=null;
+  stage.insertAdjacentHTML('beforeend',`<div class="chips">${RUD.map(r=>`<button class="chip" data-rud="${r.id}" aria-pressed="${r.id===rud}">${r.nom}</button>`).join('')}</div><div class="row gen"></div><div class="handkey"><span><b style="color:var(--hd)">D</b> mà dreta</span><span><b style="color:var(--he)">E</b> mà esquerra</span><span><b>&gt;</b> accent</span></div><div class="patwrap"><div class="pat"></div></div><div class="seqtxt"></div><div class="tempo"><button class="btn ghost sm" data-a="tm">−5</button><span class="bpm"></span><button class="btn ghost sm" data-a="tp">+5</button></div><div class="row">${[['accent','Accents'],['sound','Fes sonar el patró'],['met','Metrònom'],['kick','Bombo a cada temps'],['hide','Amaga\'l després de 2 voltes']].map(([k,l])=>`<label class="tog"><input type="checkbox" data-o="${k}" ${o[k]?'checked':''}> ${l}</label>`).join('')}</div><div class="row"><button class="btn acc" data-a="play">▶ Toca</button><span class="countin"></span></div>`);
+  const pat=$('.pat',stage),ci=$('.countin',stage),pb=$('[data-a=play]',stage);
+  const setT=v=>{tempo=Math.max(40,Math.min(160,v));Store.set('gen-tempo',tempo);$('.bpm',stage).textContent='♩ = '+tempo};setT(tempo);
+  const render=()=>{pat.innerHTML=patHTML(notes,sub,o.accent,o.kick);$('.seqtxt',stage).textContent=(sub===3?'Tres cops per temps · ':'Quatre cops per temps · ')+groups.join(' ')};
+  const load=()=>{const R=RUD.find(r=>r.id===rud);sub=R.sub;
+    if(R.gen){$('.gen',stage).innerHTML=`<label>Dificultat <select data-s="diff"><option value="facil">Fàcil</option><option value="mitja" ${diff==='mitja'?'selected':''}>Mitjana</option></select></label><label>Compassos <select data-s="bars"><option>1</option><option ${bars==2?'selected':''}>2</option></select></label><button class="btn ghost sm" data-a="gen">Genera'n un altre</button>`;
+      groups=[];const pool=CELLS[diff];for(let i=0;i<bars*4;i++){let c;do{c=pick(pool)}while(i>0&&c===groups[i-1]);groups.push(c)}}
+    else{$('.gen',stage).innerHTML='';groups=R.seq.split(' ')}
+    notes=drumNotes(groups.join(' '),sub);render()};
+  const stop=()=>{playing=false;clearInterval(timer);cancelAnimationFrame(raf);end&&end();end=null;queue=[];pb.textContent='▶ Toca';ci.textContent='';$$('.stk',pat).forEach(s=>s.classList.remove('now'));pat.classList.remove('hidepat')};
+  onCleanup(stop);
+  const start=()=>{const c=Snd.ac();if(!c)return;end=Snd.session();playing=true;pb.textContent='■ Atura';step=-sub*4;next=c.currentTime+.12;queue=[];
+    timer=setInterval(()=>{while(next<c.currentTime+.12){const spb=60/tempo/sub,per=sub*4;
+      if(step<0){const k=step+per;if(k%sub===0){Snd.click(next,k===0);queue.push({t:next,ci:k/sub+1})}}
+      else{const n=notes.length,i=step%n,nt=notes[i];if(o.sound)Snd.stick(next,nt.h,o.accent&&nt.acc);if(i%sub===0){if(o.met)Snd.click(next,i%per===0);if(o.kick)Snd.kick(next)}queue.push({t:next,i,loop:Math.floor(step/n)})}
+      next+=spb;step++}},25);
+    const loop=()=>{if(!playing)return;const els=$$('.stk',pat),now=c.currentTime;
+      while(queue.length&&queue[0].t<=now){const e=queue.shift();if(e.ci){ci.textContent=e.ci+'…';continue}
+        ci.textContent=o.hide&&e.loop>=2?'De memòria':'Volta '+(e.loop+1);els.forEach(s=>s.classList.remove('now'));els[e.i]&&els[e.i].classList.add('now');pat.classList.toggle('hidepat',o.hide&&e.loop>=2)}
+      raf=requestAnimationFrame(loop)};raf=requestAnimationFrame(loop)};
+  stage.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.rud){const w=playing;stop();rud=t.dataset.rud;Store.set('gen-rud',rud);$$('[data-rud]',stage).forEach(b=>b.setAttribute('aria-pressed',b.dataset.rud===rud));load();if(w)start()}
+    const a=t.dataset.a;if(a==='play')playing?stop():start();if(a==='gen'){const w=playing;stop();load();if(w)start()}if(a==='tm')setT(tempo-5);if(a==='tp')setT(tempo+5)});
+  stage.addEventListener('change',e=>{const t=e.target;if(t.dataset.o){o[t.dataset.o]=t.checked;render()}
+    if(t.dataset.s){const w=playing;stop();if(t.dataset.s==='diff')diff=t.value;else bars=+t.value;load();if(w)start()}});
+  load();
+}
+function freeGallery(stage){
+  let tempo=76;
+  stage.insertAdjacentHTML('beforeend',`<div class="subq">Toca una carta per escoltar-la.</div><div class="tempo"><button class="btn ghost sm" data-a="tm">−5</button><span class="bpm">♩ = 76</span><button class="btn ghost sm" data-a="tp">+5</button></div><p class="kicker" style="margin:4px 0 0">BINÀRIES</p><div class="gallery">${RCL.filter(c=>c.m==='b').map(c=>`<button class="card" data-id="${c.id}">${cardHTML(c.id)}</button>`).join('')}</div><p class="kicker" style="margin:8px 0 0">TERNÀRIES</p><div class="gallery">${RCL.filter(c=>c.m==='t').map(c=>`<button class="card" data-id="${c.id}">${cardHTML(c.id)}</button>`).join('')}</div>`);
+  stage.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.id)playCard(RC[t.dataset.id],t,{tempo});
+    if(t.dataset.a){tempo=Math.max(40,Math.min(130,tempo+(t.dataset.a==='tp'?5:-5)));$('.bpm',stage).textContent='♩ = '+tempo}});
+}
+
+/* ================= jocs, temes i etapes ================= */
+const L=(id,nom,steps)=>({id,type:'lesson',nom,steps});
+const R=(id,nom,kind,cfg,o={})=>({id,type:'round',nom,kind,cfg,...o});
+const GAMES={
+  guitarra:{nom:'Guitarra',sub:'Del pal a la cançó',col:'var(--g-gtr)',icon:'gtr',inst:GTR,free:{nom:'Explora el pal',fn:freeFret},temes:[
+    {nom:'Riff de power chords',ctx:'Una base de rock amb quatre power chords. Primer l\'escoltes i veus on es toca; després descobreixes els ingredients i acabes tocant-la amb la banda.',prog:PROG.rock,bpm:104,part:'power',nodes:[
+      {id:'a0',type:'listen',nom:'Escolta el tema',text:'Mentre sona, el pal mostra on es toca cada acord. Fixa\'t que la forma sempre és la mateixa: només es mou.',legend:'<span><b>F</b> fonamental</span><span><b>5</b> la 5a</span><span><b>8</b> l\'octava</span>',needs:['Saber on és cada <b>fonamental</b> a les cordes 6 i 5.','La forma de la <b>5a</b>.','La forma de l\'<b>octava</b>.']},
+      L('a1','On són les fonamentals',LESSONS.gR),
+      R('a2','Troba la fonamental','root',{},{n:8,tip:'Corda 6: Fa 1, Sol 3, La 5, Do 8. Corda 5: Si 2, Do 3, Re 5, Mi 7.'}),
+      L('a3','La forma del power chord',LESSONS.gP),
+      R('a4','Munta power chords','shape',{mode:'power',keys:['F','5','8'],qs:['5']},{n:6,tip:'Fonamental a la corda 6 o 5; 5a a la corda del costat, 2 trasts a la dreta; octava una corda més amunt, al mateix trast.'}),
+      {id:'a5',type:'jam',nom:'Toca el riff amb la banda',text:'Munta els quatre acords del tema on vulguis del pal. Després la banda toca amb les teves posicions.'}
+    ]},
+    {nom:'Balada amb arpegis',ctx:'A les cançons tranquil·les la guitarra sovint arpegia: toca les notes de l\'acord una a una. Aquí la 3a decideix si l\'acord és major o menor.',prog:PROG.balada,bpm:84,part:'arp',keys:['F','3','5','8'],nodes:[
+      {id:'b0',type:'listen',nom:'Escolta el tema',text:'Mira com la guitarra recorre fonamental, 3a, 5a i octava de cada acord.',legend:'<span><b>F</b> fonamental</span><span><b>3</b> la 3a</span><span><b>5</b> la 5a</span><span><b>8</b> l\'octava</span>',needs:['La fonamental de cada acord.','La <b>3a major</b> o <b>menor</b>, segons l\'acord.','La 5a i l\'octava, que ja coneixes.']},
+      L('b1','La 3a: major o menor',LESSONS.g3),
+      R('b2','Munta arpegis','shape',{mode:'line',keys:['F','3','5','8'],qs:['maj','min']},{n:6,tip:'3a major: corda més aguda, 1 trast a l\'esquerra. 3a menor: 2 trasts a l\'esquerra.'}),
+      {id:'b3',type:'jam',nom:'Toca la balada amb la banda',text:'Munta l\'arpegi de cada acord. Després la banda toca amb les teves notes.'}
+    ]},
+    {nom:'Domina el pal',ctx:'Entrenament de totes les distàncies, per trobar qualsevol nota sense comptar.',nodes:[
+      L('c0','Octaves, 5es i 4es a fons',LESSONS.g2),
+      R('c1','Octaves','interval',{ivs:['8a'],show:'both'},{n:6,tip:'2 cordes més agudes, 2 trasts a la dreta. Entre la corda 3 i la 2, un trast més.'}),
+      R('c2','8a, 5a i 4a','interval',{ivs:['8a','5a','4a'],show:'both'},{n:8,tip:'5a: corda més aguda, 2 a la dreta; o corda més greu, mateix trast. 4a: al revés.'}),
+      R('c3','Totes les distàncies','interval',{ivs:IV_ORDER,show:'both'},{n:8}),
+      R('c4','Només el nom','interval',{ivs:IV_ORDER,show:'name'},{n:8,tip:'Ara només et diem la nota: pensa quina distància és.'}),
+      R('c5','Contrarellotge','crono',{notes:'nat',qty:4,time:30},{n:5,tip:'Troba 4 notes iguals abans que s\'acabi el temps. Salta d\'octava en octava.'})
+    ]}
+  ]},
+  baix:{nom:'Baix',sub:'Línies que funcionen',col:'var(--g-bass)',icon:'bass',inst:BAS,free:{nom:'Explora el pal',fn:freeFret},temes:[
+    {nom:'Línia de rock',ctx:'El secret de moltes línies de baix: per a cada acord toques la fonamental i hi combines la 5a i l\'octava. Sempre la mateixa forma, moguda d\'acord en acord.',prog:PROG.rock,bpm:100,part:'line',keys:['F','5','8','5'],nodes:[
+      {id:'a0',type:'listen',nom:'Escolta el tema',text:'Mira com el baix fa fonamental, 5a, octava i 5a a cada acord. La forma no canvia mai.',legend:'<span><b>F</b> fonamental</span><span><b>5</b> la 5a</span><span><b>8</b> l\'octava</span>',needs:['La <b>fonamental</b> a les cordes 4 i 3.','La forma de la <b>5a</b>.','La forma de l\'<b>octava</b>.']},
+      L('a1','On són les fonamentals',LESSONS.bR),
+      R('a2','Troba la fonamental','root',{},{n:8,tip:'Corda 4: Fa 1, Sol 3, La 5, Do 8. Corda 3: Si 2, Do 3, Re 5, Mi 7.'}),
+      L('a3','Fonamental, 5a i octava',LESSONS.bL),
+      R('a4','Munta la línia','shape',{mode:'line',keys:['F','5','8','5'],qs:['5']},{n:6,tip:'5a: corda més aguda, 2 trasts a la dreta (o corda més greu, mateix trast). Octava: 2 cordes amunt, 2 a la dreta.'}),
+      {id:'a5',type:'jam',nom:'Toca la línia amb la banda',text:'Munta la línia de cada acord. Després la banda toca amb les teves notes.'}
+    ]},
+    {nom:'Línia amb 3es',ctx:'Si a la línia hi poses la 3a, el baix ja diu si l\'acord és major o menor.',prog:PROG.balada,bpm:88,part:'line',keys:['F','3','5','8'],style:'ballad',nodes:[
+      {id:'b0',type:'listen',nom:'Escolta el tema',text:'El baix recorre fonamental, 3a, 5a i octava. Al La m, la 3a és menor.',legend:'<span><b>F</b> fonamental</span><span><b>3</b> la 3a</span><span><b>5</b> la 5a</span><span><b>8</b> l\'octava</span>',needs:['La fonamental de cada acord.','La <b>3a major</b> o <b>menor</b>.','La 5a i l\'octava.']},
+      L('b1','La 3a al baix',LESSONS.b3),
+      R('b2','Munta arpegis','shape',{mode:'line',keys:['F','3','5','8'],qs:['maj','min']},{n:6,tip:'3a major: corda més aguda, 1 trast a l\'esquerra. 3a menor: 2 trasts a l\'esquerra.'}),
+      {id:'b3',type:'jam',nom:'Toca la línia amb la banda',text:'Munta la línia de cada acord. Després la banda toca amb les teves notes.'}
+    ]},
+    {nom:'Velocitat al pal',ctx:'Reptes contra rellotge per trobar notes per tot el pal.',nodes:[
+      L('c0','Salta d\'octava en octava',LESSONS.b2),
+      R('c1','Troba 3 notes','crono',{notes:'nat',qty:3,time:30},{n:5}),
+      R('c2','Troba 4 notes','crono',{notes:'nat',qty:4,time:25},{n:5,tip:'Quan en trobis una, salta a la seva octava.'}),
+      R('c3','Amb alteracions','crono',{notes:'all',qty:4,time:30},{n:5}),
+      R('c4','8a, 5a i 4a','interval',{ivs:['8a','5a','4a'],show:'both'},{n:8}),
+      R('c5','Totes les notes','crono',{notes:'nat',qty:'all',time:45},{n:4})
+    ]}
+  ]},
+  teclat:{nom:'Teclat',sub:'Construeix acords',col:'var(--g-keys)',icon:'keys',free:{nom:'Explora acords',fn:freeChord},temes:[
+    {nom:'Pop de quatre acords',ctx:'Do, Sol, La m i Fa: la progressió de centenars de cançons pop. Aprens a construir cada acord comptant semitons i la toques amb la banda.',prog:PROG.pop,bpm:92,part:'keys',nodes:[
+      {id:'a0',type:'listen',nom:'Escolta el tema',text:'Mira quines tecles fa servir cada acord.',needs:['Comptar <b>semitons</b> al teclat.','La fórmula de l\'acord <b>major</b>: +4 +3.','La fórmula de l\'acord <b>menor</b>: +3 +4.']},
+      L('a1','Comptar semitons',LESSONS.k1),
+      L('a2','L\'acord major',LESSONS.k2),
+      R('a3','Acords majors','chord',{types:['maj'],roots:[0,3,4,1,5,2].map(l=>({l,acc:0}))},{n:6,tip:'Major: fonamental +4 +3. Compten totes les tecles.'}),
+      L('a4','L\'acord menor',LESSONS.k3),
+      R('a5','Majors i menors','chord',{types:['maj','min'],roots:ROOTS_NAT},{n:8,tip:'Major: +4 +3. Menor: +3 +4.'}),
+      {id:'a6',type:'jam',nom:'Toca el tema amb la banda',text:'Construeix els quatre acords. Després la banda toca amb les teves posicions.'}
+    ]},
+    {nom:'Tecles negres',ctx:'Acords que fan servir tecles negres.',nodes:[L('b0','Tecles negres',LESSONS.k4),R('b1','Amb alteracions','chord',{types:['maj','min'],roots:ROOTS_ALL},{n:8})]},
+    {nom:'Més colors',ctx:'sus, disminuïts, power chords i acords de 7a.',nodes:[L('c0','sus, dim i 5',LESSONS.k5),R('c1','sus, dim i 5','chord',{types:['dim','sus2','sus4','p5'],roots:ROOTS_ALL},{n:8,tip:'sus4: +5 +2 · sus2: +2 +5 · dim: +3 +3 · 5: +7.'}),L('c2','Acords de 7a',LESSONS.k6),R('c3','Acords de 7a','chord',{types:['dom7','maj7','m7'],roots:ROOTS_ALL},{n:8,tip:'7: +4 +3 +3 · maj7: +4 +3 +4 · m7: +3 +4 +3.'})]}
+  ]},
+  bateria:{nom:'Bateria',sub:'Mans i paradiddles',col:'var(--g-drum)',icon:'drum',free:{nom:'Generador lliure',fn:freeDrum},temes:[
+    {nom:'Les mans',ctx:'Cops simples i dobles, a temps amb el metrònom.',nodes:[L('a0','Les dues mans',LESSONS.d1),R('a1','Pols amb la dreta','drum',{seq:'D D D D',sub:1,tempo:70},{tip:'Un cop a cada temps. Escolta una volta i després toques tu.'}),R('a2','Cops simples','drum',{seq:'DE DE DE DE',sub:2,tempo:70}),R('a3','Cops dobles','drum',{seq:'DD EE DD EE',sub:2,tempo:70})]},
+    {nom:'Paradiddles',ctx:'Combinacions de cops simples i dobles.',nodes:[L('b0','El paradiddle',LESSONS.d2),R('b1','Paradiddle lent','drum',{seq:'DEDD EDEE',sub:2,tempo:70}),R('b2','Paradiddle','drum',{seq:'DEDD EDEE',sub:4,tempo:60}),R('b3','Paradiddle invertit','drum',{seq:'DEED EDDE',sub:4,tempo:60}),R('b4','Doble paradiddle','drum',{seq:'DEDEDD EDEDEE',sub:3,tempo:60}),R('b5','Paradiddle-diddle','drum',{seq:'DEDDEE DEDDEE',sub:3,tempo:60})]}
+  ]},
+  dictat:{nom:'Dictat rítmic',sub:'Escolta i tria la carta',col:'var(--g-dict)',icon:'dict',free:{nom:'Totes les cartes',fn:freeGallery},temes:[
+    {nom:'Binari',ctx:'Cartes de quatre temps.',nodes:[L('a0','Llegir les cartes',LESSONS.t1),R('a1','Negres i silencis','dictat',{lv:1,tempo:80},{n:6}),R('a2','Amb corxeres','dictat',{lv:2,tempo:72},{n:6}),R('a3','Amb semicorxeres','dictat',{lv:3,tempo:60},{n:6})]},
+    {nom:'Ternari',ctx:'Cartes de tres temps i temps partits en tres.',nodes:[L('b0','El ternari',LESSONS.t2),R('b1','Ternari (3/4)','dictat',{lv:4,tempo:84},{n:6}),R('b2','Temps partits en tres','dictat',{lv:5,tempo:56},{n:6})]},
+    {nom:'Barreja',ctx:'De tot una mica.',nodes:[R('c0','Barreja','dictat',{lv:6,tempo:70},{n:8})]}
+  ]}
+};
+const FLAT={};
+Object.entries(GAMES).forEach(([gid,g])=>{FLAT[gid]=[];g.temes.forEach((t,ti)=>{t.n=ti+1;t.nodes.forEach(n=>{n.tema=t;n.id=`t${ti}${n.id}`;FLAT[gid].push(n)})})});
+const ENG={interval:qInterval,crono:qCrono,chord:qChord,dictat:qDictat,drum:qDrum,root:qRoot,shape:qShape};
+const typeLabel=n=>({lesson:'Aprèn',listen:'Escolta',jam:'Amb la banda'})[n.type]||(n.kind==='crono'?'Contrarellotge':'Repte');
+const teacher=()=>Store.get('teacher',false);
+function unlocked(gid,i){if(teacher()||i===0)return true;return P.done(gid,FLAT[gid][i-1].id)}
+
+/* ================= pantalles ================= */
+function renderHome(){
+  const sc=screen(`<div class="home"><h1>Tria amb què toques</h1><p class="lead">Llenguatge musical aplicat als instruments de Rockin. Cada tema comença amb una base que sona; després descobreixes què necessites per tocar-la, ho practiques i la toques amb la banda.</p>
+    <div class="tiles">${Object.entries(GAMES).map(([id,g])=>{const tot=FLAT[id].length,d=FLAT[id].filter(n=>P.done(id,n.id)).length;
+      return `<button class="tile" data-g="${id}" style="--g:${g.col}"><span class="ticon">${ICONS[g.icon]}</span><span class="tname">${g.nom}</span><span class="tsub">${g.sub}</span><span class="tprog"><i style="width:${d/tot*100}%"></i></span><span class="tcount">${d}/${tot}</span></button>`}).join('')}</div>
+    <label class="tog teacher"><input type="checkbox" id="teacher" ${teacher()?'checked':''}> Mode professorat: totes les etapes obertes</label></div>`);
+  sc.addEventListener('click',e=>{const t=e.target.closest('[data-g]');if(t){Snd.ac();location.hash=t.dataset.g}});
+  $('#teacher',sc).onchange=e=>Store.set('teacher',e.target.checked);
+}
+function renderMap(gid){
+  const g=GAMES[gid],flat=FLAT[gid],cur=flat.findIndex((n,i)=>unlocked(gid,i)&&!P.done(gid,n.id));let k=0;
+  const sc=screen(`<div class="maphead" style="--g:${g.col}"><button class="back" data-act="home" aria-label="Tornar a l'inici">←</button><span class="ticon">${ICONS[g.icon]}</span><div class="grow"><h1>${g.nom}</h1><p>${g.sub}</p></div><button class="btn ghost" data-act="free">${g.free.nom}</button></div>
+    ${g.temes.map((t,ti)=>`<section class="tema" style="--g:${g.col}"><div class="tema-h"><span class="tema-k">TEMA ${ti+1}</span><span class="tema-n">${t.nom}</span><span class="tema-c">${t.ctx}</span>${t.prog?`<div class="prog">${t.prog.map(c=>`<span>${c.name}</span>`).join('')}</div>`:''}</div>
+      ${t.nodes.map(n=>{const i=k++,un=unlocked(gid,i),p=P.get(gid,n.id),done=p&&p.done;
+        const st=!un?LOCK:i===cur?'<span class="nx">Següent</span>':n.type==='round'||n.type==='jam'?(p?`<span class="stars">${[1,2,3].map(s=>s<=p.stars?'<b>★</b>':'☆').join('')}</span>`:''):done?'<span class="ck">✓</span>':'';
+        return `<button class="trk${un?'':' locked'}${i===cur?' cur':''}" data-i="${i}"><span class="num">${String(i+1).padStart(2,'0')}</span><span class="tt">${n.nom}<span class="ty">${typeLabel(n)}</span></span><span class="st">${st}</span></button>`}).join('')}</section>`).join('')}`);
+  if(cur>3)later(()=>{const b=$$('.trk',sc)[cur];b&&b.scrollIntoView({block:'center',behavior:'smooth'})},250);
+  sc.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.act==='home')location.hash='inici';
+    if(t.dataset.act==='free'){Snd.ac();runFree(gid)}
+    if(t.dataset.i!==undefined){const i=+t.dataset.i;if(!unlocked(gid,i)){t.animate([{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'none'}],{duration:250});return}Snd.ac();startNode(gid,i)}});
+}
+function startNode(gid,i){const n=FLAT[gid][i];if(!n){renderMap(gid);return}({lesson:runLesson,listen:runListen,jam:runJam2,round:runRound})[n.type](gid,i)}
+function hud(g,title,count){return `<div class="hud" style="--g:${g.col}"><button class="back" data-act="map" aria-label="Tornar als temes">✕</button><div class="htitle">${title}</div><div class="pips">${Array.from({length:count},()=>'<i class="pip"></i>').join('')}</div></div>`}
+function setPips(sc,k,states){$$('.hud .pip',sc).forEach((p,i)=>{p.className='pip '+(states[i]||'')+(i===k?' cur':'')})}
+
+function runLesson(gid,idx){
+  const g=GAMES[gid],node=FLAT[gid][idx],steps=node.steps;let k=0;
+  const sc=screen(hud(g,node.nom,steps.length)+`<div class="stage" style="--g:${g.col}"><span class="kicker">${node.tema.prog?`TEMA ${node.tema.n} · `:''}APRÈN · ${'<span class="kn"></span>'}/${steps.length}</span><h2></h2><p class="ltext"></p><div class="larea" style="display:grid;gap:14px"></div><p class="say"></p><div class="lfoot"><button class="btn" data-act="cont" disabled>Continua →</button></div></div>`);
+  const say=mkSay($('.say',sc)),cont=$('[data-act=cont]',sc),states=[];
+  const show=()=>{if(cardStop)cardStop();setPips(sc,k,states);$('.kn',sc).textContent=k+1;const st=steps[k];
+    $('h2',sc).textContent=st.title;$('.ltext',sc).innerHTML=st.text;const area=$('.larea',sc);area.innerHTML='';area.onclick=null;say('');
+    cont.disabled=true;cont.textContent=k===steps.length-1?'Acaba ✓':'Continua →';
+    const ctx={area,say,isDone:false,done(msg,silent){if(msg)say('✓ '+msg,'ok');if(!silent)Snd.ok();cont.disabled=false;states[k]='done';setPips(sc,k,states)}};
+    st.run(ctx)};
+  sc.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;
+    if(t.dataset.act==='map')renderMap(gid);
+    if(t.dataset.act==='cont'&&!t.disabled){k++;if(k>=steps.length){P.set(gid,node.id,{done:true});startNode(gid,idx+1)}else{show();window.scrollTo({top:0,behavior:'smooth'})}}});
+  show();
+}
+function runRound(gid,idx){
+  const g=GAMES[gid],node=FLAT[gid][idx],single=node.kind==='drum',n=single?1:node.n;
+  let tempo=Store.get(`tempo-${gid}-${node.id}`,node.cfg.tempo);
+  const sc=screen(hud(g,node.nom,n)+`<div class="stage" style="--g:${g.col}"></div>`);
+  const stage=$('.stage',sc);
+  stage.innerHTML=`<div class="splash"><span class="kicker">${node.tema.prog?`TEMA ${node.tema.n} · `:''}${typeLabel(node).toUpperCase()}${single?'':` · ${n} REPTES`}</span><h2>${node.nom}</h2>${node.tip?`<p class="tip">${node.tip}</p>`:''}${tempo?`<div class="tempo"><button class="btn ghost sm" data-a="tm">−5</button><span class="bpm">♩ = ${tempo}</span><button class="btn ghost sm" data-a="tp">+5</button></div>`:''}${node.kind==='chord'?`<label class="tog"><input type="checkbox" id="usfirst" ${Store.get('us',false)?'checked':''}> Xifrat americà primer (Gm, D7…)</label>`:''}${single?'<p class="subq">Toca amb els coixinets de la pantalla o amb les tecles F (esquerra) i J (dreta).</p>':''}<button class="btn acc big" data-a="start">Comença</button></div>`;
+  const setT=v=>{tempo=Math.max(40,Math.min(140,v));Store.set(`tempo-${gid}-${node.id}`,tempo);$('.bpm',stage).textContent='♩ = '+tempo};
+  sc.addEventListener('click',e=>{if(e.target.closest('[data-act=map]'))renderMap(gid)});
+  const res=[];let i=0;
+  const ps=()=>res.map(r=>r===2?'net':r===1?'aj':'no');
+  const runQ=st=>{setPips(sc,i,ps());ENG[node.kind](st,node.cfg,g,(r,info)=>{
+    if(single){showResults(gid,idx,r,[],info);return}
+    res.push(r);i++;setPips(sc,i,ps());
+    if(i>=n)showResults(gid,idx,res.reduce((a,x)=>a+(x===2?1:x===1?.5:0),0)/n,res);
+    else{const nx=document.createElement('div');nx.className='stage screen';nx.style.setProperty('--g',g.col);st.replaceWith(nx);runQ(nx)}},{tempo})};
+  stage.onclick=e=>{const t=e.target.closest('[data-a]');if(!t)return;
+    if(t.dataset.a==='tm')setT(tempo-5);if(t.dataset.a==='tp')setT(tempo+5);
+    if(t.dataset.a==='start'){const us=$('#usfirst',stage);if(us)Store.set('us',us.checked);Snd.ac();
+      const fresh=document.createElement('div');fresh.className='stage screen';fresh.style.setProperty('--g',g.col);stage.replaceWith(fresh);runQ(fresh)}};
+}
+function showResults(gid,idx,score,res,info){
+  const g=GAMES[gid],node=FLAT[gid][idx],nx=FLAT[gid][idx+1];
+  const stars=score>=.95?3:score>=.75?2:score>=.5?1:0;P.set(gid,node.id,{done:stars>=1,stars,best:Math.round(score*100)});
+  const pct=info?info.pct:Math.round(score*100);
+  const net=res.filter(r=>r===2).length,aj=res.filter(r=>r===1).length;
+  const line=info?`${info.line}.`:`${net} de ${res.length} sense ajuda${aj?` · ${aj} amb pistes o errors`:''}.`;
+  const head=['Encara no','Superat','Molt bé','Impecable'][stars];
+  const tips=info&&info.tips&&info.tips.length?`<p class="tip">${info.tips.join(' ')}</p>`:'';
+  const sc=screen(`<div class="stage" style="--g:${g.col}"><div class="result"><span class="kicker">${node.nom.toUpperCase()}</span><div class="bignum">${pct}%</div><div class="meter">${[1,2,3].map(s=>`<i class="${s<=stars?'on':''}"></i>`).join('')}</div><h2>${head}</h2><p class="ltext">${line}</p>${!info?`<div class="pips" style="width:min(360px,100%)">${res.map(r=>`<i class="pip ${r===2?'net':r===1?'aj':'no'}"></i>`).join('')}</div>`:''}${tips}${stars===0?'<p class="ltext">Per obrir l\'etapa següent cal arribar al 50%. Torna-hi: cada vegada surt diferent.</p>':''}
+    <div class="actions"><button class="btn ${stars&&nx?'ghost':'acc big'}" data-act="again">Torna-hi</button>${stars&&nx?`<button class="btn acc big" data-act="next">${nx.nom} →</button>`:''}<button class="btn ghost" data-act="map">Temes</button></div></div></div>`);
+  if(stars)Snd.ok();
+  sc.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act;
+    if(a==='again')startNode(gid,idx);if(a==='next')startNode(gid,idx+1);if(a==='map')renderMap(gid)});
+}
+function runFree(gid){
+  const g=GAMES[gid];
+  const sc=screen(`<div class="hud" style="--g:${g.col}"><button class="back" data-act="map" aria-label="Tornar als temes">✕</button><div class="htitle">${g.free.nom}</div></div><div class="stage" style="--g:${g.col}"><span class="kicker">TALLER LLIURE</span></div>`);
+  sc.addEventListener('click',e=>{if(e.target.closest('[data-act=map]'))renderMap(gid)});
+  g.free.fn($('.stage',sc),g);
+}
+
+/* ================= arrencada ================= */
+function route(){const h=(location.hash||'').slice(1);if(GAMES[h])renderMap(h);else renderHome()}
+window.addEventListener('hashchange',route);
+$('#home-btn').onclick=()=>{if(location.hash==='#inici')renderHome();else location.hash='inici'};
+const sb=$('#snd');sb.addEventListener('click',()=>{Snd.on=!Snd.on;sb.setAttribute('aria-pressed',Snd.on);sb.textContent=Snd.on?'♪ So':'♪ Sense so';if(!Snd.on&&bandStop)bandStop()});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!/BUTTON|SELECT|INPUT/.test(e.target.tagName)){const b=$('[data-a=next],[data-act=cont]:not(:disabled)',app);if(b)b.click()}});
+route();
+</script>
+
+</body>
+</html>
