@@ -135,6 +135,7 @@ select{border:1.5px solid var(--line);background:var(--surface);border-radius:8p
 .pip.net,.pip.done{background:var(--ok)} .pip.aj{background:#D9A100} .pip.no{background:var(--bad)}
 .stage{--g:var(--g-gtr);background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:20px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px;position:relative}
 .stage>*,.larea>*,.fbx,.kbx{min-width:0}
+.bx{display:grid;gap:14px;min-width:0}
 .stage h2{margin:0;font-size:clamp(1.3rem,3.4vw,1.7rem);letter-spacing:-.01em;text-wrap:balance}
 .ltext{margin:0;font-family:var(--f-text);font-size:1.06rem;max-width:64ch}
 .ltext b{font-family:var(--f-ui)}
@@ -181,6 +182,16 @@ select{border:1.5px solid var(--line);background:var(--surface);border-radius:8p
 .slot.cur{border-style:solid;border-color:var(--ink)}
 .slot.done{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
 .slot.done i{color:var(--ok);font-weight:700}
+.ladder{display:flex;flex-wrap:wrap;align-items:flex-end;gap:2px 0;font-family:var(--f-ui)}
+.ladder .ln{display:grid;justify-items:center;gap:2px;min-width:3rem}
+.ladder .ln b{border:1.5px solid var(--ink);border-radius:8px;padding:4px 8px;font-size:.95rem}
+.ladder .ln.hl b{background:var(--yellow);border-color:var(--yellow);color:var(--on-yellow)}
+.ladder .ln span{font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.ladder .lg{display:grid;justify-items:center;padding:0 2px 1.35rem;min-width:2.2rem}
+.ladder .lg i{font-style:normal;font-family:var(--f-mono);font-size:.78rem;font-weight:700;color:var(--hint)}
+.ladder .lg::after{content:"";display:block;height:2px;background:var(--hint);width:100%;margin-top:2px}
+.ladder .lg.semi i{color:var(--bad)} .ladder .lg.semi::after{background:var(--bad)}
+.ladcap{font-size:.85rem;color:var(--muted);margin:0}
 .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted)}
 .legend b{font-family:var(--f-mono);color:var(--ink)}
 
@@ -361,10 +372,13 @@ const Snd={
   pluckAt(midi,bass,t,vol=1,dur){
     if(!this.on)return;const c=this.ctx;
     const s=c.createBufferSource();s.buffer=this.buf(midi,bass);
-    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=bass?1000:3400;
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=bass?650:3400;
     const g=c.createGain(),d=dur||(bass?2.1:1.7);
-    g.gain.setValueAtTime((bass?.8:.38)*vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+    g.gain.setValueAtTime((bass?.75:.38)*vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
     s.connect(lp).connect(g).connect(this.dest());s.start(t);s.stop(t+d+.05);
+    if(bass){const f=440*2**((midi-69)/12),o=c.createOscillator(),o2=c.createOscillator(),og=c.createGain();o.type='sine';o.frequency.value=f;o2.type='triangle';o2.frequency.value=f;
+      const o2g=c.createGain();o2g.gain.value=.35;og.gain.setValueAtTime(0,t);og.gain.linearRampToValueAtTime(.55*vol,t+.012);og.gain.exponentialRampToValueAtTime(.3*vol,t+.25);og.gain.exponentialRampToValueAtTime(.001,t+Math.max(.15,d));
+      o.connect(og);o2.connect(o2g).connect(og);og.connect(this.dest());o.start(t);o2.start(t);o.stop(t+d+.05);o2.stop(t+d+.05)}
   },
   pluck(midi,bass,delay=0){if(!this.on)return;const c=this.ac();if(!c)return;this.pluckAt(midi,bass,c.currentTime+.01+delay)},
   pair(a,b,bass){this.pluck(a,bass);this.pluck(b,bass,.45);this.pluck(a,bass,1);this.pluck(b,bass,1)},
@@ -600,6 +614,7 @@ const S={
     if(!o.mustListen){c.isDone=true;c.done(null,true)}
   }}},
   fret(title,text,o){return{title,text,run(c){
+    if(o.pre)c.area.insertAdjacentHTML('beforeend',o.pre);
     const fb=new Fretboard(c.area,o.inst);
     (o.marks||[]).forEach(([s,f,l])=>fb.mark(s,f,'root',l));(o.fixed||[]).forEach(([s,f,l])=>fb.mark(s,f,'ok',l));(o.rings||[]).forEach(([s,f])=>fb.ring(s,f));
     const root=o.marks&&o.marks[0],rm=root?fb.midi(root[0],root[1]):null;
@@ -680,15 +695,26 @@ const SLOT={F:{semis:0,nom:'fonamental'},'5':{semis:7,alt:-5,nom:'5a'},'8':{semi
 const slotSemis=(k,q)=>k==='3'?(q==='min'?3:4):SLOT[k].semis;
 function autoShape(inst,ch,keys){const r=autoRoot(inst,ch.pc);const pos=[];keys.forEach(k=>{if(k==='F'){pos.push([r.s,r.f]);return}const p=nearPos(inst,r.m+slotSemis(k,ch.q),r);pos.push([p.s,p.f])});return{root:r,pos,midis:pos.map(([s,f])=>inst.tuning[s]+f)}}
 
+/* escala de notes naturals al llarg d'una corda */
+function ladderHTML(openMidi,strNum,hl=[]){const out=[];let prev=null;
+  for(let f=0;f<=12;f++){const pc=mod(openMidi+f,12);if(!LET_PC.includes(pc))continue;
+    if(prev!==null){const d=f-prev;out.push(`<span class="lg${d===1?' semi':''}"><i>+${d}</i></span>`)}
+    out.push(`<span class="ln${hl.includes(f)?' hl':''}"><b>${PC_NAME[pc]}</b><span>${f===0?'aire':'trast '+f}</span></span>`);prev=f}
+  return `<div><p class="ladcap">Corda ${strNum}: pujant per l'escala</p><div class="ladder">${out.join('')}</div></div>`}
+function rootSteps(I){const lo=I.bass?'4':'6',hi=I.bass?'3':'5',ins=I.bass?'el baix':'la guitarra';
+  return [
+    S.info('Les notes, en ordre','Les notes sempre van en el mateix ordre: <b>Do, Re, Mi, Fa, Sol, La, Si</b>, i torna a començar. Al pal, cada trast puja un semitò. Entre dues notes seguides hi ha <b>2 trasts</b>, excepte entre <b>Mi i Fa</b> i entre <b>Si i Do</b>, que només n\'hi ha <b>1</b>.',{html:ladderHTML(I.tuning[0],lo)}),
+    S.fret('Puja per la corda '+lo,`La corda ${lo} a l'aire és un <b>Mi</b>. La nota següent és Fa, i entre Mi i Fa només hi ha <b>1 trast</b>. Toca el Fa.`,{inst:I,marks:[[0,0,'Mi']],at:[0,1],ok:'Fa, al trast 1.'}),
+    S.fret('Dos trasts','Entre Fa i Sol hi ha <b>2 trasts</b>. Toca el Sol.',{inst:I,marks:[[0,0,'Mi']],fixed:[[0,1,'Fa']],at:[0,3],ok:'Sol, al trast 3: el primer punt del pal.'}),
+    S.fret('Continua pujant','Sol → La: 2 trasts. La → Si: 2 trasts més. Toca el La i després el Si.',{inst:I,marks:[[0,0,'Mi']],fixed:[[0,1,'Fa'],[0,3,'Sol']],seq:[[0,5],[0,7]],seqMsg:()=>'Ara el Si: 2 trasts més.',ok:'La al 5 i Si al 7: tots dos tenen punt.'}),
+    S.fret('Si → Do','Entre Si i Do només hi ha <b>1 trast</b>. Toca el Do.',{inst:I,marks:[[0,0,'Mi']],fixed:[[0,1,'Fa'],[0,3,'Sol'],[0,5,'La'],[0,7,'Si']],at:[0,8],ok:`Corda ${lo}: Mi 0, Fa 1, Sol 3, La 5, Si 7, Do 8.`}),
+    S.fret('La corda '+hi,`La corda ${hi} a l'aire és un <b>La</b>. Puja per l'escala fins al Do: La → Si són 2 trasts; Si → Do, només 1.`,{inst:I,marks:[[1,0,'La']],pre:ladderHTML(I.tuning[1],hi),at:[1,3],ok:'Do, al trast 3.'}),
+    S.fret('Ara tu',`Des del Do de la corda ${hi}, continua pujant: toca el Re i després el Mi.`,{inst:I,marks:[[1,0,'La']],fixed:[[1,2,'Si'],[1,3,'Do']],seq:[[1,5],[1,7]],seqMsg:()=>'Ara el Mi: 2 trasts més.',ok:`Corda ${hi}: La 0, Si 2, Do 3, Re 5, Mi 7. Amb aquestes dues cordes ja trobes totes les fonamentals que fa servir ${ins}.`})
+  ]}
 /* ================= lliçons ================= */
 const G=GTR,B=BAS;
 const LESSONS={
-  gR:[
-    S.fret('On són les fonamentals','Els power chords del tema tenen la fonamental a la <b>corda 6</b> o a la <b>corda 5</b>. Els punts del pal t\'hi orienten: a la corda 6, el punt del 5 és un <b>La</b>. Toca\'l.',{inst:G,at:[0,5],ok:'La. És el primer acord del tema: La5.'}),
-    S.fret('Més notes a la corda 6','Al punt del 3 hi ha el <b>Sol</b>, i al trast 1, el Fa. Toca el Sol.',{inst:G,at:[0,3],ok:'Corda 6: Fa al 1, Sol al 3, La al 5, Do al 8.'}),
-    S.fret('La corda 5','A la corda 5, el punt del 3 és un <b>Do</b> i el del 5, un Re. Toca el Do.',{inst:G,at:[1,3],ok:'Corda 5: Do al 3, Re al 5, Mi al 7.'}),
-    S.fret('Ara tu','El segon acord del tema és Fa5. Troba el <b>Fa</b> a la corda 6.',{inst:G,at:[0,1],ok:'Fa al trast 1.'})
-  ],
+  gR:rootSteps(G),
   gP:[
     S.fret('Ingredient 1: la 5a','Un power chord és la fonamental i la seva <b>5a</b>. La 5a és a la corda del costat (la més aguda), <b>2 trasts a la dreta</b>. Des del La, toca-la.',{inst:G,marks:[[0,5,'La']],at:[1,7],ok:'La i Mi: ja sona a power chord.',after:()=>Snd.power([45,52])}),
     S.fret('Ingredient 2: l\'octava','Per fer-lo més gruixut, s\'hi afegeix l\'<b>octava</b>: 2 cordes més amunt, <b>al mateix trast que la 5a</b>.',{inst:G,marks:[[0,5,'La']],fixed:[[1,7,'5']],at:[2,7],ok:'La5 complet: fonamental, 5a i octava.',after:()=>Snd.power([45,52,57])}),
@@ -709,12 +735,7 @@ const LESSONS={
     S.fret('De la corda 3 a la 2, amb la 5a','Des del Re de la corda 3, la 5a cap amunt queda <b>3 trasts</b> a la dreta, a la corda 2.',{inst:G,marks:[[3,7,'Re']],semis:7,ok:'El trast de més de la corda 2.'}),
     S.fret('La 4a, el mirall de la 5a','La 4a és al revés: corda <b>més aguda</b>, <b>al mateix trast</b>. Des del Do, troba el Fa.',{inst:G,marks:[[1,3,'Do']],semis:5,ok:'Do – Fa: una 4a.'})
   ],
-  bR:[
-    S.fret('Quatre cordes','El baix té quatre cordes: Mi, La, Re, Sol, com les quatre més greus de la guitarra. Les fonamentals de la línia són a les <b>cordes 4 i 3</b>. Toca el <b>La</b> del trast 5 de la corda 4.',{inst:B,at:[0,5],ok:'La: la primera nota del tema.'}),
-    S.fret('Els punts del pal','A la corda 4: Fa al 1, Sol al 3, La al 5, Do al 8. Toca el <b>Fa</b>.',{inst:B,at:[0,1],ok:'Fa.'}),
-    S.fret('La corda 3','A la corda 3, el punt del 3 és un <b>Do</b> i el del 5, un Re. Toca el Do.',{inst:B,at:[1,3],ok:'Corda 3: Do al 3, Re al 5, Mi al 7.'}),
-    S.fret('El trast 5 = la corda següent','Toca el <b>trast 5</b> de la corda 4 i després la <b>corda 3 a l\'aire</b>. Sonen igual!',{inst:B,seq:[[0,5],[1,0]],seqMsg:()=>'Ara la corda 3 a l\'aire.',ok:'El mateix La. Així s\'afina el baix.'})
-  ],
+  bR:rootSteps(B),
   bL:[
     S.fret('Ingredient 1: la 5a','La 5a és a la corda <b>més aguda</b> del costat, <b>2 trasts a la dreta</b>. Des del La, toca-la.',{inst:B,marks:[[0,5,'La']],at:[1,7],ok:'La – Mi.',after:()=>Snd.pair(33,40,true)}),
     S.fret('Ingredient 2: l\'octava','L\'octava: <b>2 cordes més amunt, al mateix trast que la 5a</b>.',{inst:B,marks:[[0,5,'La']],fixed:[[1,7,'5']],at:[2,7],ok:'La – Mi – La.',after:()=>[33,40,45,40].forEach((m,i)=>Snd.pluck(m,true,i*.35))}),
@@ -791,15 +812,17 @@ const LESSONS={
 const ROOTREF={false:'Punts de referència: corda 6 → Fa 1, Sol 3, La 5, Do 8 · corda 5 → Si 2, Do 3, Re 5, Mi 7.',true:'Punts de referència: corda 4 → Fa 1, Sol 3, La 5, Do 8 · corda 3 → Si 2, Do 3, Re 5, Mi 7.'};
 const strTxt=inst=>inst.bass?'4 o 3':'6 o 5';
 function shapeHint(k,ch,power){if(k==='5')return power?'La 5a: corda més aguda del costat, 2 trasts a la dreta.':'La 5a: corda més aguda, 2 trasts a la dreta; o corda més greu, al mateix trast.';if(k==='8')return"L'octava: 2 cordes més agudes, 2 trasts a la dreta.";return ch.q==='min'?"La 3a menor: corda més aguda, 2 trasts a l'esquerra.":"La 3a major: corda més aguda, 1 trast a l'esquerra."}
-function buildFret(host,inst,ch,keys,power,onDone){
+function buildFret(host,inst,ch,keys,power,onDone,give){
   host.insertAdjacentHTML('beforeend',`<div class="slots">${keys.map((k,i)=>`<span class="slot"><b>${k}</b><i></i></span>`).join('')}</div><div class="fbx"></div><p class="say"></p><div class="actions"><button class="btn ghost" data-b="hint">Pista</button></div>`);
   const fb=new Fretboard($('.fbx',host),inst),say=mkSay($('.say',host)),slots=$$('.slot',host),hb=$('[data-b=hint]',host);
   let i=0,root=null,hints=0,errors=0;const midis=[],pos=[];
   const cur=()=>slots.forEach((s,j)=>s.classList.toggle('cur',j===i));
   const task=()=>{const k=keys[i];say(i===0?`Toca la fonamental: un <b>${PC_NAME[ch.pc]}</b> a la corda ${strTxt(inst)}.`:`Ara ${k==='8'?"l'octava":k==='5'?'la 5a':`la 3a ${ch.q==='min'?'menor':'major'}`}.`)};
   const accepts=(k,s,f)=>{const m=fb.midi(s,f);if(i===0)return fb.pc(s,f)===ch.pc&&s<=1;if(Math.abs(f-root.f)>4)return false;const sem=slotSemis(k,ch.q);return m===root.m+sem||(!power&&k==='5'&&m===root.m-5)};
-  cur();task();
+  if(give){const r=autoRoot(inst,ch.pc);root={s:r.s,f:r.f,m:r.m};fb.mark(r.s,r.f,'root',PC_NAME[ch.pc]);slots[0].classList.add('done');$('i',slots[0]).textContent=PC_NAME[ch.pc];midis.push(r.m);pos.push([r.s,r.f]);i=1;later(()=>fb.play(r.s,r.f),150)}
+  cur();task();if(give)say(`La fonamental, el <b>${PC_NAME[ch.pc]}</b>, ja és al pal (corda ${inst.tuning.length-root.s}, trast ${root.f}). Ara ${keys[1]==='3'?`la 3a ${ch.q==='min'?'menor':'major'}`:'la 5a'}.`);
   fb.onCell=(s,f)=>{fb.play(s,f);if(i>=keys.length)return;const k=keys[i];
+    if(give&&s===root.s&&f===root.f){say(`Aquesta és la fonamental, el ${PC_NAME[ch.pc]}.`);return}
     if(accepts(k,s,f)){if(i===0)root={s,f,m:fb.midi(s,f)};fb.unring();
       fb.mark(s,f,i===0?'root':'ok',i===0?PC_NAME[ch.pc]:k);slots[i].classList.add('done');$('i',slots[i]).textContent=PC_NAME[fb.pc(s,f)];
       midis.push(fb.midi(s,f));pos.push([s,f]);i++;hints=0;hb.disabled=false;hb.textContent='Pista';
@@ -912,11 +935,14 @@ function qRoot(stage,cfg,g,done){
   stage.insertAdjacentHTML('beforeend',`<div class="prompt">Troba un <b>${PC_NAME[pc]}</b> a la corda ${strTxt(inst)}</div><div class="fbx"></div><p class="say"></p><div class="actions"><button class="btn ghost" data-a="hint">Pista</button><button class="btn ghost" data-a="skip">Salta</button></div>`);
   const fb=new Fretboard($('.fbx',stage),inst),say=mkSay($('.say',stage)),acts=$('.actions',stage);let errors=0,hints=0,over=false;
   fb.onCell=(s,f)=>{fb.play(s,f);if(over)return;
-    if(fb.pc(s,f)===pc&&s<=1){over=true;fb.unring();fb.mark(s,f,'ok',PC_NAME[pc]);say(`✓ ${PC_NAME[pc]}: corda ${inst.tuning.length-s}, trast ${f}.`,'ok');Snd.ok();acts.innerHTML='';nextBtn(acts,errors||hints?1:2,done);return}
+    if(fb.pc(s,f)===pc&&s<=1){over=true;fb.unring();$$('.ghost',fb.el).forEach(c=>{c.classList.remove('m','ghost');c.querySelector('.dot').textContent=''});fb.mark(s,f,'ok',PC_NAME[pc]);say(`✓ ${PC_NAME[pc]}: corda ${inst.tuning.length-s}, trast ${f}.`,'ok');Snd.ok();acts.innerHTML='';nextBtn(acts,errors||hints?1:2,done);return}
     errors++;Snd.no();fb.flashBad(s,f,PC_NAME[fb.pc(s,f)]);say(fb.pc(s,f)===pc?`És un ${PC_NAME[pc]}, però el volem a la corda ${strTxt(inst)}.`:`Això és un ${PC_NAME[fb.pc(s,f)]}.`,'bad')};
   acts.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;
     if(t.dataset.a==='skip'&&!over){over=true;done(0)}
-    if(t.dataset.a==='hint'&&!over){hints++;if(hints===1)say(ROOTREF[inst.bass],'hint');else{const p=autoRoot(inst,pc);fb.ring(p.s,p.f);say('És a la casella marcada.','hint');t.disabled=true}}});
+    if(t.dataset.a==='hint'&&!over){hints++;
+      if(hints===1){$('.fbx',stage).insertAdjacentHTML('beforebegin',`<div class="row" style="gap:18px">${ladderHTML(inst.tuning[0],inst.bass?'4':'6')}${ladderHTML(inst.tuning[1],inst.bass?'3':'5')}</div>`);say(`<b>Pista 1.</b> Comença a la corda a l'aire i puja per l'escala: 2 trasts entre notes, només 1 entre Mi–Fa i Si–Do.`,'hint')}
+      else if(hints===2){for(const s of [0,1])for(let f=0;f<=12;f++){const q=fb.pc(s,f);if(LET_PC.includes(q)&&!fb.c(s,f).classList.contains('m'))fb.mark(s,f,'ghost',PC_NAME[q])}say('<b>Pista 2.</b> Aquí tens totes les notes de les dues cordes.','hint')}
+      else{const p=autoRoot(inst,pc);fb.ring(p.s,p.f);say('<b>Pista 3.</b> És a la casella marcada.','hint');t.disabled=true}}});
 }
 function qShape(stage,cfg,g,done){
   const inst=g.inst;let ch;do{const pc=pick(LET_PC),q=pick(cfg.qs);ch={pc,q,name:PC_NAME[pc]+(q==='5'?'5':q==='min'?' m':'')}}while(ch.name===lastQ);lastQ=ch.name;
@@ -926,7 +952,7 @@ function qShape(stage,cfg,g,done){
   sk.onclick=e=>{if(e.target.closest('[data-a=skip]')&&!over){over=true;done(0)}};
   buildFret($('.bx',stage),inst,ch,cfg.keys,power,r=>{over=true;sk.innerHTML='';
     if(power)Snd.power(r.midis);else{const c=Snd.ac();if(c)r.midis.forEach((m,i)=>Snd.pluckAt(m,inst.bass,c.currentTime+.05+i*.38,1,.5))}
-    r.say(power?`✓ ${ch.name}: fonamental, 5a i octava.`:`✓ Línia de ${ch.name}.`,'ok');nextBtn(sk,r.clean?2:1,done)});
+    r.say(power?`✓ ${ch.name}: fonamental, 5a i octava.`:`✓ Línia de ${ch.name}.`,'ok');nextBtn(sk,r.clean?2:1,done)},true);
 }
 function qCrono(stage,cfg,g,done){
   const inst=g.inst;let pc;
@@ -1071,7 +1097,7 @@ function runJam2(gid,idx){
       if(tema.part==='power')Snd.power(r.midis);else if(!isKeys){const c=Snd.ac();if(c)r.midis.forEach((m,k)=>Snd.pluckAt(m,inst.bass,c.currentTime+.05+k*.35,1,.5))}
       r.say(`✓ ${ch.name} a punt.`,'ok');i++;
       const b=document.createElement('button');b.className='btn';b.dataset.a='next';b.textContent=i<N?`Següent: ${prog[i].name} →`:'A tocar amb la banda →';b.onclick=step;$('.nx',st).appendChild(b);b.focus({preventScroll:true})};
-    if(isKeys)buildKeys($('.bx',st),chOfProg(ch),fin);else buildFret($('.bx',st),inst,ch,keys,tema.part==='power',fin);
+    if(isKeys)buildKeys($('.bx',st),chOfProg(ch),fin);else buildFret($('.bx',st),inst,ch,keys,tema.part==='power',fin,true);
   };
   const finale=()=>{setPips(sc,N,res.map(r=>r?'net':'aj'));
     const net=res.filter(Boolean).length,score=(net+(N-net)*.5)/N;
@@ -1170,12 +1196,12 @@ const R=(id,nom,kind,cfg,o={})=>({id,type:'round',nom,kind,cfg,...o});
 const GAMES={
   guitarra:{nom:'Guitarra',sub:'Del pal a la cançó',col:'var(--g-gtr)',icon:'gtr',inst:GTR,free:{nom:'Explora el pal',fn:freeFret},temes:[
     {nom:'Riff de power chords',ctx:'Una base de rock amb quatre power chords. Primer l\'escoltes i veus on es toca; després descobreixes els ingredients i acabes tocant-la amb la banda.',prog:PROG.rock,bpm:104,part:'power',nodes:[
-      {id:'a0',type:'listen',nom:'Escolta el tema',text:'Mentre sona, el pal mostra on es toca cada acord. Fixa\'t que la forma sempre és la mateixa: només es mou.',legend:'<span><b>F</b> fonamental</span><span><b>5</b> la 5a</span><span><b>8</b> l\'octava</span>',needs:['Saber on és cada <b>fonamental</b> a les cordes 6 i 5.','La forma de la <b>5a</b>.','La forma de l\'<b>octava</b>.']},
+      {id:'a0',type:'listen',nom:'Escolta el tema',text:'Mentre sona, el pal mostra on es toca cada acord. Fixa\'t que la forma sempre és la mateixa: només es mou.',legend:'<span><b>F</b> fonamental</span><span><b>5</b> la 5a</span><span><b>8</b> l\'octava</span>',needs:['Trobar la <b>fonamental</b> de cada acord a les cordes 6 i 5, pujant per l\'escala des de la corda a l\'aire.','La forma de la <b>5a</b>.','La forma de l\'<b>octava</b>.']},
       L('a1','On són les fonamentals',LESSONS.gR),
       R('a2','Troba la fonamental','root',{},{n:8,tip:'Corda 6: Fa 1, Sol 3, La 5, Do 8. Corda 5: Si 2, Do 3, Re 5, Mi 7.'}),
       L('a3','La forma del power chord',LESSONS.gP),
-      R('a4','Munta power chords','shape',{mode:'power',keys:['F','5','8'],qs:['5']},{n:6,tip:'Fonamental a la corda 6 o 5; 5a a la corda del costat, 2 trasts a la dreta; octava una corda més amunt, al mateix trast.'}),
-      {id:'a5',type:'jam',nom:'Toca el riff amb la banda',text:'Munta els quatre acords del tema on vulguis del pal. Després la banda toca amb les teves posicions.'}
+      R('a4','Munta power chords','shape',{mode:'power',keys:['F','5','8'],qs:['5']},{n:6,tip:'La fonamental ja surt al pal. Tu hi poses la 5a (corda del costat, 2 trasts a la dreta) i l\'octava (una corda més amunt, al mateix trast).'}),
+      {id:'a5',type:'jam',nom:'Toca el riff amb la banda',text:'Per a cada acord, la fonamental ja surt al pal: tu hi afegeixes la 5a i l\'octava. Després la banda toca amb les teves notes.'}
     ]},
     {nom:'Balada amb arpegis',ctx:'A les cançons tranquil·les la guitarra sovint arpegia: toca les notes de l\'acord una a una. Aquí la 3a decideix si l\'acord és major o menor.',prog:PROG.balada,bpm:84,part:'arp',keys:['F','3','5','8'],nodes:[
       {id:'b0',type:'listen',nom:'Escolta el tema',text:'Mira com la guitarra recorre fonamental, 3a, 5a i octava de cada acord.',legend:'<span><b>F</b> fonamental</span><span><b>3</b> la 3a</span><span><b>5</b> la 5a</span><span><b>8</b> l\'octava</span>',needs:['La fonamental de cada acord.','La <b>3a major</b> o <b>menor</b>, segons l\'acord.','La 5a i l\'octava, que ja coneixes.']},
@@ -1194,7 +1220,7 @@ const GAMES={
   ]},
   baix:{nom:'Baix',sub:'Línies que funcionen',col:'var(--g-bass)',icon:'bass',inst:BAS,free:{nom:'Explora el pal',fn:freeFret},temes:[
     {nom:'Línia de rock',ctx:'El secret de moltes línies de baix: per a cada acord toques la fonamental i hi combines la 5a i l\'octava. Sempre la mateixa forma, moguda d\'acord en acord.',prog:PROG.rock,bpm:100,part:'line',keys:['F','5','8','5'],nodes:[
-      {id:'a0',type:'listen',nom:'Escolta el tema',text:'Mira com el baix fa fonamental, 5a, octava i 5a a cada acord. La forma no canvia mai.',legend:'<span><b>F</b> fonamental</span><span><b>5</b> la 5a</span><span><b>8</b> l\'octava</span>',needs:['La <b>fonamental</b> a les cordes 4 i 3.','La forma de la <b>5a</b>.','La forma de l\'<b>octava</b>.']},
+      {id:'a0',type:'listen',nom:'Escolta el tema',text:'Mira com el baix fa fonamental, 5a, octava i 5a a cada acord. La forma no canvia mai.',legend:'<span><b>F</b> fonamental</span><span><b>5</b> la 5a</span><span><b>8</b> l\'octava</span>',needs:['Trobar la <b>fonamental</b> a les cordes 4 i 3, pujant per l\'escala des de la corda a l\'aire.','La forma de la <b>5a</b>.','La forma de l\'<b>octava</b>.']},
       L('a1','On són les fonamentals',LESSONS.bR),
       R('a2','Troba la fonamental','root',{},{n:8,tip:'Corda 4: Fa 1, Sol 3, La 5, Do 8. Corda 3: Si 2, Do 3, Re 5, Mi 7.'}),
       L('a3','Fonamental, 5a i octava',LESSONS.bL),
