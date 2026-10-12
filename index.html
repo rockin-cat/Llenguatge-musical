@@ -308,6 +308,34 @@ select{border:1.5px solid var(--line);background:var(--surface);border-radius:8p
   .trk{padding:10px 12px;grid-template-columns:2rem minmax(0,1fr) auto}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.stage3d{position:relative;height:clamp(380px,62vh,600px);border-radius:14px;overflow:hidden;background:#0c0b0a;margin-bottom:16px}
+.stage3d canvas{display:block;width:100%!important;height:100%!important;touch-action:manipulation}
+.s3head{position:absolute;left:20px;top:16px;color:#f3efe6;pointer-events:none;z-index:2}
+.s3head h1{margin:0;font-size:clamp(1.5rem,4vw,2.3rem);letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.s3head p{margin:2px 0 0;font-family:var(--f-text);color:#cfc8ba}
+.s3labels{position:absolute;inset:0;pointer-events:none;z-index:1}
+.s3l{position:absolute;left:0;top:0;pointer-events:auto;border:1.5px solid rgba(255,255,255,.25);background:rgba(18,16,14,.72);color:#f3efe6;border-radius:10px;padding:5px 10px;display:grid;justify-items:center;gap:0;backdrop-filter:blur(4px);transition:background .15s,border-color .15s,transform .05s;white-space:nowrap}
+.s3l b{font-size:.95rem}
+.s3l span{font-size:.72rem;opacity:.8;font-family:var(--f-mono)}
+.s3l.on,.s3l:hover{background:#FFC012;color:#1B1B19;border-color:#FFC012}
+.has3d .tiles{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.has3d .tile{padding:10px 12px}
+.has3d .tile .ticon{width:30px;height:30px;padding:4px;margin-bottom:2px}
+.has3d .tile .tname{font-size:1rem}
+.has3d .tile .tsub{display:none}
+.has3d .tile .tprog{margin-top:6px}
+.ptsb{border:1.5px solid var(--on-yellow);background:var(--on-yellow);color:var(--yellow);border-radius:8px;padding:3px 10px;font-weight:700;font-size:.85rem;white-space:nowrap;margin-left:auto}
+.ptsb .pv{font-family:var(--f-mono)}
+.ptsb.bump{animation:pop .4s}
+.ptsb+.snd{margin-left:0}
+.pf-top{display:flex;flex-wrap:wrap;gap:16px 40px;margin-bottom:18px}
+.bignum .of{font-size:.45em;color:var(--muted)}
+.skbar{display:block;height:5px;border-radius:3px;background:var(--sunk);margin-top:6px;overflow:hidden;max-width:420px}
+.skbar i{display:block;height:100%;border-radius:3px}
+.skbar i.dom{background:var(--ok)} .skbar i.mid{background:#D9A100} .skbar i.low{background:var(--bad)}
+.sk-dom{color:var(--ok);font-weight:700} .sk-mid{color:#B98500;font-weight:700} .sk-low{color:var(--bad);font-weight:700} .sk-none{color:var(--muted)}
+.trk:disabled{opacity:.45;cursor:not-allowed}
+.gain{font-family:var(--f-mono);font-weight:700;color:var(--ok)}
 footer{max-width:960px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:.8rem}
 </style>
 
@@ -317,12 +345,14 @@ footer{max-width:960px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
 <header class="bar">
   <div class="bar-in">
     <button class="brand" id="home-btn" aria-label="Inici"><img class="logo-img" src="marca/rockin-wordmark.png" alt="ROCKIN" width="720" height="141"><span class="sub">Llenguatge musical</span></button>
+    <button id="pts-btn" class="ptsb" title="El que saps">El que saps · <span class="pv">0</span></button>
     <button id="snd" class="snd" aria-pressed="true" title="Activa o silencia el so">♪ So</button>
   </div>
 </header>
 <div id="app"></div>
 <footer>Rockin.cat SCCL · Bastides de suport a l'aprenentatge: es practica amb el navegador i després es porta a l'instrument i al grup. Cartes i materials sota llicència CC BY-NC-SA 4.0.</footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 /* ================= utilitats ================= */
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -901,7 +931,7 @@ function qInterval(stage,cfg,g,done){
     const targets=fb.positions(tpc).filter(([a,b])=>Math.abs(b-f)<=4&&a!==s);
     if(!targets.some(([a,b])=>fb.midi(a,b)>fb.midi(s,f)))continue;
     const key=s+'-'+f+'-'+iv;if(key===lastQ)continue;lastQ=key;
-    q={s,f,pc,iv,I,root,tgt,tpc,targets,hints:0,errors:0};break;
+    q={s,f,pc,iv,I,root,tgt,tpc,targets,hints:0,errors:0};qTag='iv:'+iv;break;
   }
   const rn=nm(q.root),tn=nm(q.tgt),I=q.I,rm=fb.midi(q.s,q.f);
   const big=()=>ivArt(I).replace(I.nom,'<b>'+I.nom+'</b>');
@@ -977,7 +1007,7 @@ function qCrono(stage,cfg,g,done){
   acts.addEventListener('click',e=>{const t=e.target.closest('[data-a=skip]');if(t&&!over){stop();done(0)}});
 }
 function qChord(stage,cfg,g,done){
-  let c;for(let t=0;t<200;t++){c=chordOf(pick(cfg.roots),pick(cfg.types));if(c.notes.some(awkward)||c.ca===lastQ)continue;break}lastQ=c.ca;
+  let c;for(let t=0;t<200;t++){c=chordOf(pick(cfg.roots),pick(cfg.types));if(c.notes.some(awkward)||c.ca===lastQ)continue;break}lastQ=c.ca;qTag='ch:'+c.type;
   const us=Store.get('us',false);
   stage.insertAdjacentHTML('beforeend',`<div class="prompt">Construeix <b>${us?c.us:c.ca}</b> <span class="subq">(${us?c.ca:c.us})</span></div><div class="bx"></div><div class="actions skipbox"><button class="btn ghost" data-a="skip">Salta</button></div>`);
   let over=false;const sk=$('.skipbox',stage);sk.onclick=e=>{if(e.target.closest('[data-a=skip]')&&!over){over=true;done(0)}};
@@ -1041,7 +1071,7 @@ function qDrum(stage,cfg,g,done,opt){
   function finish(){
     judging=false;els.forEach(x=>x.classList.remove('now'));
     const good=exp.filter(e=>e.hit&&e.ok),wh=exp.filter(e=>e.hit&&!e.ok).length,score=Math.max(0,good.length-extras*.5)/exp.length;
-    const avg=good.length?good.reduce((a,e)=>a+e.dt,0)/good.length:0;
+    const avg=good.length?good.reduce((a,e)=>a+e.dt,0)/good.length:0;if(good.length>4){const d=Store.d.drumdt||(Store.d.drumdt=[]);d.push(+avg.toFixed(3));if(d.length>20)d.shift();Store.save()}
     const tips=[];if(wh)tips.push(`${wh} cop${wh>1?'s':''} amb la mà equivocada.`);if(extras)tips.push(`${extras} cop${extras>1?'s':''} de més.`);
     if(good.length>4&&avg>.045)tips.push('Tendeixes a anar una mica tard: escolta el metrònom.');if(good.length>4&&avg<-.045)tips.push('Tendeixes a avançar-te: espera el clic.');
     done(score,{pct:Math.round(good.length/exp.length*100),tips,line:'dels cops a temps i amb la mà correcta'});
@@ -1087,13 +1117,13 @@ function runJam2(gid,idx){
   const sc=screen(hud(g,node.nom,N)+`<div class="stage" style="--g:${g.col}"></div>`);let stage=$('.stage',sc);
   sc.addEventListener('click',e=>{if(e.target.closest('[data-act=map]'))renderMap(gid)});
   stage.innerHTML=`<div class="splash"><span class="kicker">TEMA ${tema.n} · TOCA AMB LA BANDA</span><h2>${tema.nom}</h2><p>${node.text}</p><div class="prog">${prog.map(c=>`<span>${c.name}</span>`).join('')}</div><button class="btn acc big" data-a="start">Comença</button></div>`;
-  const res=[],user=[],jamPos=[];let i=0;
+  const res=[],user=[],jamPos=[],jamP0=Ev.pts();let i=0;
   const step=()=>{setPips(sc,i,res.map(r=>r?'net':'aj'));
     const st=document.createElement('div');st.className='stage screen';st.style.setProperty('--g',g.col);stage.replaceWith(st);stage=st;
     if(i>=N){finale();return}
     const ch=prog[i];
     st.innerHTML=`<span class="kicker">ACORD ${i+1} DE ${N}</span><div class="prog">${prog.map((c,k)=>`<span class="${k<i?'done':k===i?'on':''}">${c.name}</span>`).join('')}</div><div class="prompt">${isKeys?`Construeix <b>${ch.name}</b>`:tema.part==='power'?`Munta <b>${ch.name}</b>`:`Notes de <b>${ch.name}</b>: ${keys.join(' – ')}`}</div><div class="bx"></div><div class="actions nx"></div>`;
-    const fin=r=>{res.push(r.clean);user.push(r.midis);if(r.pos)jamPos.push(r.pos);
+    const fin=r=>{res.push(r.clean);user.push(r.midis);if(r.pos)jamPos.push(r.pos);Ev.mark(isKeys?`teclat:ch:${ch.q==='min'?'min':'maj'}`:`${gid}:${tema.part==='power'?'power':keys.includes('3')?'arp':'line'}`,r.clean?2:1);
       if(tema.part==='power')Snd.power(r.midis);else if(!isKeys){const c=Snd.ac();if(c)r.midis.forEach((m,k)=>Snd.pluckAt(m,inst.bass,c.currentTime+.05+k*.35,1,.5))}
       r.say(`✓ ${ch.name} a punt.`,'ok');i++;
       const b=document.createElement('button');b.className='btn';b.dataset.a='next';b.textContent=i<N?`Següent: ${prog[i].name} →`:'A tocar amb la banda →';b.onclick=step;$('.nx',st).appendChild(b);b.focus({preventScroll:true})};
@@ -1112,7 +1142,7 @@ function runJam2(gid,idx){
     stage.onclick=e=>{const t=e.target.closest('[data-a]');if(!t)return;
       if(t.dataset.a==='play'){if(bandStop){bandStop();t.textContent='▶ Toca amb la banda';return}t.textContent='■ Atura';
         bandPlay({bpm:tema.bpm,prog,loops:2,parts:demoParts(g,tema,user),onBeat:(ci,b)=>{if(ci>=0)show(ci,b)},onEnd:()=>{t.textContent='▶ Torna-ho a tocar';chips.forEach(c=>c.classList.remove('on'))}})}
-      if(t.dataset.a==='end'){if(bandStop)bandStop();showResults(gid,idx,score,res.map(r=>r?2:1),{pct:Math.round(score*100),line:`${net} de ${N} acords muntats sense ajuda`,tips:[]})}};
+      if(t.dataset.a==='end'){if(bandStop)bandStop();const g0=jamP0;Ev.add(30);showResults(gid,idx,score,res.map(r=>r?2:1),{pct:Math.round(score*100),line:`${net} de ${N} acords muntats sense ajuda`,tips:[]},Ev.pts()-g0)}};
   };
   stage.onclick=e=>{if(e.target.closest('[data-a=start]')){Snd.ac();step()}};
 }
@@ -1266,21 +1296,189 @@ const GAMES={
   ]}
 };
 const FLAT={};
-Object.entries(GAMES).forEach(([gid,g])=>{FLAT[gid]=[];g.temes.forEach((t,ti)=>{t.n=ti+1;t.nodes.forEach(n=>{n.tema=t;n.id=`t${ti}${n.id}`;FLAT[gid].push(n)})})});
+Object.entries(GAMES).forEach(([gid,g])=>{g.id=gid;FLAT[gid]=[];g.temes.forEach((t,ti)=>{t.n=ti+1;t.nodes.forEach(n=>{n.tema=t;n.id=`t${ti}${n.id}`;FLAT[gid].push(n)})})});
 const ENG={interval:qInterval,crono:qCrono,chord:qChord,dictat:qDictat,drum:qDrum,root:qRoot,shape:qShape};
 const typeLabel=n=>({lesson:'Aprèn',listen:'Escolta',jam:'Amb la banda'})[n.type]||(n.kind==='crono'?'Contrarellotge':'Repte');
 const teacher=()=>Store.get('teacher',false);
 function unlocked(gid,i){if(teacher()||i===0)return true;return P.done(gid,FLAT[gid][i-1].id)}
 
 /* ================= pantalles ================= */
+/* ================= avaluació: punts i el que saps ================= */
+let qTag=null;
+const SKILLS={
+  guitarra:[['root','Trobar fonamentals (cordes 6 i 5)','t0a2'],['power','Power chords','t0a4'],['arp','Arpegis amb 3a major i menor','t1b2'],['iv:8a','Octaves','t2c1'],['iv:5a','5es','t2c2'],['iv:4a','4es','t2c2'],['iv:3M','3es majors','t2c3'],['iv:3m','3es menors','t2c3'],['crono','Velocitat al pal','t2c5']],
+  baix:[['root','Trobar fonamentals (cordes 4 i 3)','t0a2'],['line','Línia fonamental – 5a – octava','t0a4'],['arp','Línia amb 3es','t1b2'],['iv:8a','Octaves','t2c4'],['iv:5a','5es','t2c4'],['iv:4a','4es','t2c4'],['crono','Velocitat al pal','t2c2']],
+  teclat:[['ch:maj','Acords majors','t0a3'],['ch:min','Acords menors','t0a5'],['ch:sus4','sus4','t2c1'],['ch:sus2','sus2','t2c1'],['ch:dim','Disminuïts','t2c1'],['ch:p5','Power chords (5)','t2c1'],['ch:dom7','Acords de 7','t2c3'],['ch:maj7','maj7','t2c3'],['ch:m7','m7','t2c3']],
+  bateria:[['t0a1','Pols amb la dreta','t0a1'],['t0a2','Cops simples','t0a2'],['t0a3','Cops dobles','t0a3'],['t1b1','Paradiddle lent','t1b1'],['t1b2','Paradiddle','t1b2'],['t1b3','Paradiddle invertit','t1b3'],['t1b4','Doble paradiddle','t1b4'],['t1b5','Paradiddle-diddle','t1b5']],
+  dictat:[['lv1','Negres i silencis','t0a1'],['lv2','Corxeres','t0a2'],['lv3','Semicorxeres','t0a3'],['lv4','Ternari (3/4)','t1b1'],['lv5','Temps partits en tres','t1b2'],['lv6','Barreja','t2c0']]
+};
+const Ev={
+  pts(){return Store.d.pts||0},
+  add(n){if(!n)return;Store.d.pts=this.pts()+n;Store.save();ptsBar(n)},
+  mark(key,r,pts){const st=Store.d.stats||(Store.d.stats={});const s=st[key]||(st[key]={r:[],n:0,last:0});s.r.push(r);if(s.r.length>8)s.r.shift();s.n++;s.last=Date.now();Store.save();this.add(pts!==undefined?pts:(r===2?10:r===1?5:0))},
+  level(key){const s=(Store.d.stats||{})[key];if(!s||!s.r.length)return null;return Math.round(s.r.reduce((a,x)=>a+(x===2?1:x===1?.5:0),0)/s.r.length*100)},
+  hist(e){const h=Store.d.hist||(Store.d.hist=[]);h.push({...e,t:Date.now()});if(h.length>60)h.shift();Store.save()}
+};
+function skillKey(gid,node){
+  const k=node.kind,c=node.cfg||{};
+  if(k==='interval')return qTag?`${gid}:${qTag}`:null;
+  if(k==='root')return `${gid}:root`;
+  if(k==='shape')return `${gid}:${c.keys.includes('3')?'arp':c.mode==='power'?'power':'line'}`;
+  if(k==='crono')return `${gid}:crono`;
+  if(k==='chord')return qTag?`teclat:${qTag}`:null;
+  if(k==='dictat')return `dictat:lv${c.lv}`;
+  if(k==='drum')return `bateria:${node.id}`;
+  return null;
+}
+function ptsBar(n){const b=$('#pts-btn');if(!b)return;$('.pv',b).textContent=Ev.pts();if(n>0){b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump')}}
+const status=v=>v===null?['Encara no','none']:v>=85?['Ho domines','dom']:v>=55?['Gairebé','mid']:['Per treballar','low'];
+function renderProfile(){
+  const all=[];Object.entries(SKILLS).forEach(([gid,list])=>list.forEach(([k,nom,nid])=>all.push({gid,key:`${gid}:${k}`,nom,nid,v:Ev.level(`${gid}:${k}`)})));
+  const tried=all.filter(s=>s.v!==null),dom=tried.filter(s=>s.v>=85).length;
+  const recs=tried.filter(s=>s.v<85).sort((a,b)=>a.v-b.v).slice(0,3);
+  if(recs.length<3)Object.keys(GAMES).forEach(gid=>{if(recs.length>=3)return;const i=FLAT[gid].findIndex((n,j)=>unlocked(gid,j)&&!P.done(gid,n.id));if(i>=0&&(i>0||!tried.some(s=>s.gid===gid)))recs.push({gid,nid:FLAT[gid][i].id,nom:FLAT[gid][i].nom,cont:true})});
+  const dts=Store.d.drumdt||[],avg=dts.length?dts.reduce((a,b)=>a+b,0)/dts.length:null;
+  const hist=(Store.d.hist||[]).slice(-8).reverse();
+  const fmt=t=>{const d=new Date(t);return d.toLocaleDateString('ca',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('ca',{hour:'2-digit',minute:'2-digit'})};
+  const sc=screen(`<div class="maphead"><button class="back" data-act="home" aria-label="Tornar a l'inici">←</button><div class="grow"><h1>El que saps</h1><p>Com vas a cada instrument, segons els últims reptes de cada habilitat.</p></div></div>
+    <div class="pf-top"><div><span class="kicker">PUNTS</span><div class="bignum">${Ev.pts()}</div></div><div><span class="kicker">HABILITATS DOMINADES</span><div class="bignum">${dom}<span class="of">/${all.length}</span></div></div><div><span class="kicker">PRACTICADES</span><div class="bignum">${tried.length}<span class="of">/${all.length}</span></div></div></div>
+    ${recs.length?`<section class="tema"><div class="tema-h"><span class="tema-k">ET RECOMANEM</span></div>${recs.map(r=>{const i=FLAT[r.gid].findIndex(n=>n.id===r.nid);return `<button class="trk" data-g="${r.gid}" data-i="${i}"><span class="num" style="color:${GAMES[r.gid].col}">●</span><span class="tt">${r.cont?'Continua':'Repassa'}: ${r.nom}<span class="ty">${GAMES[r.gid].nom}${r.v!=null?` · ${r.v}%`:''}</span></span><span class="st"><span class="nx">Practica</span></span></button>`}).join('')}</section>`:''}
+    ${Object.entries(SKILLS).map(([gid,list])=>{const g=GAMES[gid];return `<section class="tema" style="--g:${g.col}"><div class="tema-h"><span class="tema-k">${g.nom.toUpperCase()}</span>${gid==='bateria'&&avg!==null?`<span class="tema-c">Control del temps: ${Math.abs(avg)<.02?'vas a temps':avg>0?`tendeixes a anar tard (${Math.round(avg*1000)} ms)`:`tendeixes a avançar-te (${Math.round(-avg*1000)} ms)`}.</span>`:''}</div>
+      ${list.map(([k,nom,nid])=>{const v=Ev.level(`${gid}:${k}`),[lab,cls]=status(v),i=FLAT[gid].findIndex(n=>n.id===nid),un=i>=0&&unlocked(gid,i);
+        return `<button class="trk sk" data-g="${gid}" data-i="${i}" ${un?'':'disabled'}><span class="num"></span><span class="tt">${nom}<span class="skbar"><i class="${cls}" style="width:${v||0}%"></i></span></span><span class="st"><span class="sk-${cls}">${lab}${v!==null?` · ${v}%`:''}</span></span></button>`}).join('')}</section>`}).join('')}
+    ${hist.length?`<section class="tema"><div class="tema-h"><span class="tema-k">ÚLTIMES PARTIDES</span></div>${hist.map(h=>`<div class="trk" style="cursor:default"><span class="num" style="color:${(GAMES[h.g]||{}).col}">●</span><span class="tt">${h.nom}<span class="ty">${(GAMES[h.g]||{}).nom||''} · ${fmt(h.t)}</span></span><span class="st">${h.pct!=null?h.pct+'%':'✓'}</span></div>`).join('')}</section>`:''}`);
+  sc.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.act==='home')location.hash='inici';
+    if(t.dataset.g&&t.dataset.i>=0){Snd.ac();const g=t.dataset.g,i=+t.dataset.i;location.hash=g;setTimeout(()=>startNode(g,i),60)}});
+}
+
+/* ================= escenari 3D ================= */
+function buildStage(host,onPick,info){
+  if(!window.THREE)return null;
+  const T=THREE;let renderer;
+  try{renderer=new T.WebGLRenderer({antialias:true});}catch(e){return null}
+  const W=()=>host.clientWidth,H=()=>host.clientHeight;
+  renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));renderer.setSize(W(),H());
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
+  renderer.outputEncoding=T.sRGBEncoding;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+  host.prepend(renderer.domElement);
+  const scene=new T.Scene();scene.background=new T.Color(0x0c0b0a);scene.fog=new T.Fog(0x0c0b0a,16,32);
+  const cam=new T.PerspectiveCamera(36,W()/H(),.1,100);
+  const tex=(w,h,draw)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new T.CanvasTexture(c);t.encoding=T.sRGBEncoding;t.anisotropy=4;return t};
+  const M=(color,rough=.5,metal=0,extra={})=>new T.MeshStandardMaterial({color,roughness:rough,metalness:metal,...extra});
+  const chrome=M(0xc9cbd0,.25,.9),black=M(0x141414,.6),gold=M(0xc9a54a,.3,.85);
+  const add=(parent,geo,mat,x=0,y=0,z=0,cast=true)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m};
+  const cyl=(r1,r2,h,s=24)=>new T.CylinderGeometry(r1,r2,h,s);
+  /* llums */
+  scene.add(new T.HemisphereLight(0x9aa4b8,0x2a1d12,.42));
+  const fill=new T.DirectionalLight(0xfff0dd,.32);fill.position.set(0,5,12);scene.add(fill);
+  /* escenari */
+  const wood=tex(1024,512,(g,w,h)=>{const n=12;for(let i=0;i<n;i++){const l=34+Math.random()*10;g.fillStyle=`hsl(28,38%,${l}%)`;g.fillRect(0,i*h/n,w,h/n);g.strokeStyle='rgba(0,0,0,.35)';g.lineWidth=2;g.beginPath();g.moveTo(0,i*h/n);g.lineTo(w,i*h/n);g.stroke();
+    for(let k=0;k<40;k++){g.strokeStyle=`rgba(40,20,5,${.08+Math.random()*.1})`;g.lineWidth=1;g.beginPath();const y=i*h/n+Math.random()*h/n;g.moveTo(0,y);g.bezierCurveTo(w*.3,y+3,w*.6,y-3,w,y+1);g.stroke()}
+    const off=Math.random()*w;g.fillStyle='rgba(0,0,0,.3)';g.fillRect(off,i*h/n,2,h/n)}});
+  wood.wrapS=wood.wrapT=T.RepeatWrapping;wood.repeat.set(2,2);
+  add(scene,new T.BoxGeometry(17,.5,9.5),M(0xffffff,.65,0,{map:wood}),0,-.25,-.4,false);
+  add(scene,new T.BoxGeometry(17,.5,.05),M(0x0a0a0a,.8),0,-.25,4.36,false);
+  const backTex=tex(2048,1024,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#16120f');gr.addColorStop(1,'#241c16');g.fillStyle=gr;g.fillRect(0,0,w,h);
+    for(let x=0;x<w;x+=36){const a=g.createLinearGradient(x,0,x+36,0);a.addColorStop(0,'rgba(0,0,0,.35)');a.addColorStop(.5,'rgba(255,255,255,.04)');a.addColorStop(1,'rgba(0,0,0,.35)');g.fillStyle=a;g.fillRect(x,0,36,h)}});
+  const back=add(scene,new T.PlaneGeometry(24,11),M(0xffffff,.95,0,{map:backTex}),0,4.6,-5.2,false);back.castShadow=false;
+  const logo=new Image();logo.onload=()=>{const c=backTex.image,g=c.getContext('2d');const t=document.createElement('canvas');t.width=logo.width;t.height=logo.height;const tg=t.getContext('2d');tg.drawImage(logo,0,0);tg.globalCompositeOperation='source-in';tg.fillStyle='#FFC012';tg.fillRect(0,0,t.width,t.height);
+    const lw=760,lh=lw*logo.height/logo.width;g.globalAlpha=.9;g.drawImage(t,(c.width-lw)/2,250,lw,lh);g.globalAlpha=1;backTex.needsUpdate=true};logo.src='marca/rockin-wordmark.png';
+  /* truss */
+  const truss=new T.Group();scene.add(truss);add(truss,new T.BoxGeometry(15,.18,.18),M(0x55575c,.4,.8),0,6.3,1.6,false);add(truss,new T.BoxGeometry(15,.18,.18),M(0x55575c,.4,.8),0,6.3,-3.2,false);
+  /* instruments */
+  const groups={};
+  function mkGuitar(col,bass){
+    const g=new T.Group(),k=bass?1.08:1;const sh=new T.Shape();
+    sh.moveTo(0,-.25*k);sh.bezierCurveTo(.23*k,-.25*k,.25*k,-.04*k,.14*k,.03*k);sh.bezierCurveTo(.21*k,.11*k,.2*k,.23*k,.09*k,.25*k);sh.lineTo(-.06*k,.2*k);sh.bezierCurveTo(-.14*k,.3*k,-.24*k,.16*k,-.14*k,.03*k);sh.bezierCurveTo(-.25*k,-.04*k,-.23*k,-.25*k,0,-.25*k);
+    const body=add(g,new T.ExtrudeGeometry(sh,{depth:.06,bevelEnabled:true,bevelThickness:.014,bevelSize:.014,bevelSegments:3,curveSegments:28}),M(col,.28,.15));body.position.z=-.03;
+    const nl=bass?.95:.66,neckY=.22*k+nl/2;
+    add(g,new T.BoxGeometry(.055,nl,.035),M(0xc89a63,.5),0,neckY,.02);add(g,new T.BoxGeometry(.05,nl,.008),M(0x2a1a10,.6),0,neckY,.042);
+    add(g,new T.BoxGeometry(.1,.18,.028),M(0x1a1a1a,.5),0,.22*k+nl+.09,.02);
+    add(g,new T.BoxGeometry(.11,.035,.02),black,0,-.12,.05);add(g,new T.BoxGeometry(.09,.03,.02),black,0,-.01,.05);if(!bass)add(g,new T.BoxGeometry(.09,.03,.02),black,0,.08,.05);
+    const ns=bass?4:6;for(let i=0;i<ns;i++){const x=(i-(ns-1)/2)*(bass?.011:.008);add(g,new T.BoxGeometry(.0025,nl+.36*k,.002),chrome,x,(-.12+.22*k+nl)/2+.01,.05,false)}
+    for(let i=0;i<3;i++){add(g,cyl(.012,.012,.03,10),chrome,(i-1)*.03,-.19*k,.055).rotation.x=Math.PI/2}
+    g.scale.setScalar(2.05);g.rotation.x=-.16;
+    const st=new T.Group();[-.18,.18].forEach(x=>{const l=add(st,cyl(.012,.012,.62,8),black,x,.3,.08);l.rotation.z=x>0?-.25:.25});add(st,cyl(.012,.012,.9,8),black,0,.45,-.2).rotation.x=.3;add(st,new T.BoxGeometry(.5,.04,.12),black,0,.12,.12);
+    const o=new T.Group();o.add(st);g.position.set(0,.68*(bass?1.05:1)+.25,0);o.add(g);return o}
+  function drum(r,h,col,headTex){const shell=M(col,.32,.35),head=headTex?M(0xffffff,.7,0,{map:headTex}):M(0xf1efe8,.7);return new T.Mesh(cyl(r,r,h,40),[shell,head,head])}
+  function mkDrums(){
+    const g=new T.Group(),pink=0xd23a63;
+    add(g,new T.BoxGeometry(3.8,.35,2.7),M(0x1b1b1d,.95),0,.175,0);
+    const kit=new T.Group();kit.position.set(0,.35,.15);g.add(kit);
+    const kh=tex(512,512,(c,w,h)=>{c.fillStyle='#f3f0ea';c.fillRect(0,0,w,h);c.beginPath();c.arc(w/2,h/2,w*.47,0,7);c.lineWidth=26;c.strokeStyle='#d23a63';c.stroke();c.fillStyle='#1b1b19';c.font='bold 96px Ubuntu, sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('ROCKIN',w/2,h/2)});
+    const kick=drum(.42,.38,pink,kh);kick.rotation.x=Math.PI/2;kick.position.set(0,.43,0);kick.castShadow=true;kit.add(kick);
+    [[-.23,1.0,.02],[.23,1.0,.02]].forEach(([x,y,z])=>{const t=drum(.16,.15,pink);t.position.set(x,y,z);t.rotation.x=.38;t.castShadow=true;kit.add(t)});
+    const sn=drum(.2,.12,0xd7d7d7);sn.position.set(-.62,.68,.42);sn.rotation.x=.12;sn.castShadow=true;kit.add(sn);add(kit,cyl(.012,.012,.62,8),chrome,-.62,.31,.42);
+    const ft=drum(.24,.3,pink);ft.position.set(.68,.5,.38);ft.castShadow=true;kit.add(ft);
+    [[-1.0,.25],[ -1.0,.26]].forEach(()=>{});add(kit,cyl(.012,.012,.95,8),chrome,-1.0,.47,.18);add(kit,cyl(.2,.2,.008,32),gold,-1.0,.95,.18);add(kit,cyl(.2,.2,.008,32),gold,-1.0,.975,.18);
+    const cr=add(kit,cyl(.28,.28,.007,40),gold,-.78,1.48,-.2);cr.rotation.set(.35,0,.25);add(kit,cyl(.012,.012,1.45,8),chrome,-.78,.73,-.2);
+    const rd=add(kit,cyl(.3,.3,.007,40),gold,.98,1.3,-.1);rd.rotation.set(.3,0,-.22);add(kit,cyl(.012,.012,1.28,8),chrome,.98,.64,-.1);
+    add(kit,cyl(.18,.18,.09,24),black,0,.5,-.78);add(kit,cyl(.02,.02,.48,8),chrome,0,.24,-.78);
+    return g}
+  function mkKeys(){
+    const g=new T.Group();
+    [[1,.62],[-1,.62]].forEach(([s])=>{const a=add(g,new T.BoxGeometry(.04,1.1,.05),black,0,.46,0);a.rotation.z=s*.62;a.position.x=0});
+    [-.42,.42].forEach(x=>{const a=add(g,new T.BoxGeometry(.04,1.05,.05),black,x*.0,.46,.25);a.rotation.z=x>0?.62:-.62});
+    add(g,new T.BoxGeometry(1.4,.1,.38),M(0x1d1d20,.45,.2),0,.93,0);
+    const keys=tex(1024,128,(c,w,h)=>{const n=36;c.fillStyle='#fafafa';c.fillRect(0,0,w,h);for(let i=0;i<=n;i++){c.fillStyle='#9a9a9a';c.fillRect(i*w/n,0,2,h)}const pat=[1,1,0,1,1,1,0];for(let i=0;i<n;i++)if(pat[i%7])
+      {c.fillStyle='#121212';c.fillRect((i+1)*w/n-w/n*.3,0,w/n*.6,h*.62)}});
+    const kp=add(g,new T.PlaneGeometry(1.3,.17),M(0xffffff,.4,0,{map:keys}),0,.985,.09,false);kp.rotation.x=-Math.PI/2;
+    add(g,new T.BoxGeometry(1.3,.012,.02),M(0x2e95d3,.4,0,{emissive:0x2e95d3,emissiveIntensity:.5}),0,.985,-.12,false);
+    return g}
+  function mkStand(){
+    const g=new T.Group();add(g,cyl(.014,.014,1.15,8),black,0,.58,0);[0,2.1,4.2].forEach(a=>{const l=add(g,cyl(.01,.01,.4,6),black,Math.cos(a)*.15,.08,Math.sin(a)*.15);l.rotation.set(Math.sin(a)*.8,0,-Math.cos(a)*.8)});
+    const desk=new T.Group();desk.position.set(0,1.18,0);desk.rotation.x=-.38;g.add(desk);add(desk,new T.BoxGeometry(.7,.48,.02),black,0,0,0);add(desk,new T.BoxGeometry(.7,.03,.06),black,0,-.24,.03);
+    const ld=new T.TextureLoader();['rhythm_binary_16','rhythm_ternary_27'].forEach((id,i)=>{const t=ld.load(`cartes/${id}.jpg`);t.encoding=T.sRGBEncoding;const p=add(desk,new T.PlaneGeometry(.21,.3),M(0xffffff,.6,0,{map:t}),(i-.5)*.25,.03,.015,false);p.rotation.z=(i-.5)*.08});
+    return g}
+  function mkAmp(w,h,d){const g=new T.Group();const gr=tex(256,256,(c,W,H)=>{c.fillStyle='#1d1b19';c.fillRect(0,0,W,H);c.strokeStyle='rgba(255,255,255,.07)';for(let i=0;i<W;i+=6){c.beginPath();c.moveTo(i,0);c.lineTo(i,H);c.stroke();c.beginPath();c.moveTo(0,i);c.lineTo(W,i);c.stroke()}c.fillStyle='#FFC012';c.fillRect(W*.35,H*.08,W*.3,H*.07)});
+    const mats=[black,black,M(0x222,.5),black,M(0xffffff,.8,0,{map:gr}),black];add(g,new T.BoxGeometry(w,h,d),mats,0,h/2,0);return g}
+  const place=(gid,obj,x,z,ry,labelY)=>{obj.position.set(x,0,z);obj.rotation.y=ry;scene.add(obj);obj.traverse(o=>{o.userData.gid=gid});groups[gid]={obj,labelY}};
+  place('bateria',mkDrums(),0,-2.3,0,2.15);
+  place('guitarra',mkGuitar(0xe8a800,false),-2.35,.9,.28,2.5);
+  const ampG=mkAmp(.78,.62,.38);ampG.position.set(-1.35,0,-.35);ampG.rotation.y=.2;scene.add(ampG);ampG.traverse(o=>o.userData.gid='guitarra');
+  place('baix',mkGuitar(0x1fa597,true),2.3,.9,-.28,2.85);
+  const ampB=mkAmp(.66,.95,.46);ampB.position.set(1.35,0,-.45);ampB.rotation.y=-.2;scene.add(ampB);ampB.traverse(o=>o.userData.gid='baix');
+  place('teclat',mkKeys(),3.75,-1.6,-.42,1.45);
+  place('dictat',mkStand(),-3.9,-1.4,.42,1.75);
+  /* focus */
+  const spots={};Object.entries(groups).forEach(([gid,{obj}])=>{const s=new T.SpotLight(0xfff1d6,1.3,22,.34,.55,1.1);s.position.set(obj.position.x*.9,6.2,obj.position.z+3);s.target=obj;s.castShadow=true;s.shadow.mapSize.set(1024,1024);s.shadow.bias=-.0004;scene.add(s);scene.add(s.target);spots[gid]=s});
+  /* etiquetes */
+  const lab=document.createElement('div');lab.className='s3labels';host.appendChild(lab);
+  Object.keys(groups).forEach(gid=>{const b=document.createElement('button');b.className='s3l';b.dataset.g=gid;b.innerHTML=`<b>${GAMES[gid].nom}</b><span>${info(gid)}</span>`;lab.appendChild(b);groups[gid].el=b;
+    b.addEventListener('pointerenter',()=>hover=gid);b.addEventListener('pointerleave',()=>{if(hover===gid)hover=null});b.addEventListener('click',()=>onPick(gid))});
+  /* interacció */
+  const ray=new T.Raycaster(),mouse=new T.Vector2(),ptr={x:0,y:0};let hover=null,raf=0,t0=performance.now();
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pickAt=e=>{const r=renderer.domElement.getBoundingClientRect();mouse.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mouse,cam);const hit=ray.intersectObjects(scene.children,true).find(h=>h.object.userData.gid);return hit?hit.object.userData.gid:null};
+  const cv=renderer.domElement;
+  cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();ptr.x=(e.clientX-r.left)/r.width-.5;ptr.y=(e.clientY-r.top)/r.height-.5;hover=pickAt(e);cv.style.cursor=hover?'pointer':'default'});
+  cv.addEventListener('pointerleave',()=>{hover=null});
+  cv.addEventListener('click',e=>{const g=pickAt(e);if(g)onPick(g)});
+  const v=new T.Vector3();
+  const frame=()=>{raf=requestAnimationFrame(frame);const t=(performance.now()-t0)/1000;
+    const sway=reduce?0:Math.sin(t*.12)*.5;cam.position.set(sway+ptr.x*1.2,3.7-ptr.y*.5,10.8);cam.lookAt(0,1.15,-.8);
+    Object.entries(groups).forEach(([gid,gr])=>{const on=hover===gid,s=spots[gid];s.intensity+=((on?3.4:hover?.75:1.35)-s.intensity)*.15;
+      v.set(gr.obj.position.x,gr.labelY,gr.obj.position.z).project(cam);gr.el.style.transform=`translate(${(v.x*.5+.5)*W()}px,${(-v.y*.5+.5)*H()}px) translate(-50%,-100%)`;gr.el.classList.toggle('on',on)});
+    renderer.render(scene,cam)};
+  frame();
+  const rs=()=>{renderer.setSize(W(),H());cam.aspect=W()/H();cam.updateProjectionMatrix()};window.addEventListener('resize',rs);
+  return()=>{cancelAnimationFrame(raf);window.removeEventListener('resize',rs);renderer.dispose();scene.traverse(o=>{if(o.geometry)o.geometry.dispose()})};
+}
 function renderHome(){
-  const sc=screen(`<div class="home"><h1>Tria amb què toques</h1><p class="lead">Llenguatge musical aplicat als instruments de Rockin. Cada tema comença amb una base que sona; després descobreixes què necessites per tocar-la, ho practiques i la toques amb la banda.</p>
+  const info=gid=>{const tot=FLAT[gid].length,d=FLAT[gid].filter(n=>P.done(gid,n.id)).length;return `${GAMES[gid].sub} · ${d}/${tot}`};
+  const sc=screen(`<div class="home"><div class="stage3d"><div class="s3head"><h1>Tria amb què toques</h1><p>Clica un instrument de l'escenari.</p></div></div>
     <div class="tiles">${Object.entries(GAMES).map(([id,g])=>{const tot=FLAT[id].length,d=FLAT[id].filter(n=>P.done(id,n.id)).length;
       return `<button class="tile" data-g="${id}" style="--g:${g.col}"><span class="ticon">${ICONS[g.icon]}</span><span class="tname">${g.nom}</span><span class="tsub">${g.sub}</span><span class="tprog"><i style="width:${d/tot*100}%"></i></span><span class="tcount">${d}/${tot}</span></button>`}).join('')}</div>
+    <p class="lead" style="margin-top:20px">Llenguatge musical aplicat als instruments de Rockin. Cada tema comença amb una base que sona; després descobreixes què necessites per tocar-la, ho practiques i la toques amb la banda.</p>
     <label class="tog teacher"><input type="checkbox" id="teacher" ${teacher()?'checked':''}> Mode professorat: totes les etapes obertes</label></div>`);
-  sc.addEventListener('click',e=>{const t=e.target.closest('[data-g]');if(t){Snd.ac();location.hash=t.dataset.g}});
+  const pick=gid=>{Snd.ac();location.hash=gid};
+  const st=$('.stage3d',sc);const kill=buildStage(st,pick,info);
+  if(kill){onCleanup(kill);sc.classList.add('has3d')}else st.remove();
+  sc.addEventListener('click',e=>{const t=e.target.closest('.tile');if(t)pick(t.dataset.g)});
   $('#teacher',sc).onchange=e=>Store.set('teacher',e.target.checked);
 }
+
 function renderMap(gid){
   const g=GAMES[gid],flat=FLAT[gid],cur=flat.findIndex((n,i)=>unlocked(gid,i)&&!P.done(gid,n.id));let k=0;
   const sc=screen(`<div class="maphead" style="--g:${g.col}"><button class="back" data-act="home" aria-label="Tornar a l'inici">←</button><span class="ticon">${ICONS[g.icon]}</span><div class="grow"><h1>${g.nom}</h1><p>${g.sub}</p></div><button class="btn ghost" data-act="free">${g.free.nom}</button></div>
@@ -1309,7 +1507,7 @@ function runLesson(gid,idx){
     st.run(ctx)};
   sc.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;
     if(t.dataset.act==='map')renderMap(gid);
-    if(t.dataset.act==='cont'&&!t.disabled){k++;if(k>=steps.length){P.set(gid,node.id,{done:true});startNode(gid,idx+1)}else{show();window.scrollTo({top:0,behavior:'smooth'})}}});
+    if(t.dataset.act==='cont'&&!t.disabled){k++;if(k>=steps.length){if(!P.done(gid,node.id)){Ev.add(20);Ev.hist({g:gid,id:node.id,nom:node.nom,pct:null})}P.set(gid,node.id,{done:true});startNode(gid,idx+1)}else{show();window.scrollTo({top:0,behavior:'smooth'})}}});
   show();
 }
 function runRound(gid,idx){
@@ -1322,25 +1520,28 @@ function runRound(gid,idx){
   sc.addEventListener('click',e=>{if(e.target.closest('[data-act=map]'))renderMap(gid)});
   const res=[];let i=0;
   const ps=()=>res.map(r=>r===2?'net':r===1?'aj':'no');
-  const runQ=st=>{setPips(sc,i,ps());ENG[node.kind](st,node.cfg,g,(r,info)=>{
-    if(single){showResults(gid,idx,r,[],info);return}
+  const p0=Ev.pts();
+  const runQ=st=>{setPips(sc,i,ps());qTag=null;ENG[node.kind](st,node.cfg,g,(r,info)=>{
+    if(single){const rr=r>=.85?2:r>=.5?1:0;Ev.mark(skillKey(gid,node),rr,Math.round(r*30));showResults(gid,idx,r,[],info,Ev.pts()-p0);return}
+    {const key=skillKey(gid,node);if(key)Ev.mark(key,r);else Ev.add(r===2?10:r===1?5:0)}
     res.push(r);i++;setPips(sc,i,ps());
-    if(i>=n)showResults(gid,idx,res.reduce((a,x)=>a+(x===2?1:x===1?.5:0),0)/n,res);
+    if(i>=n)showResults(gid,idx,res.reduce((a,x)=>a+(x===2?1:x===1?.5:0),0)/n,res,null,Ev.pts()-p0);
     else{const nx=document.createElement('div');nx.className='stage screen';nx.style.setProperty('--g',g.col);st.replaceWith(nx);runQ(nx)}},{tempo})};
   stage.onclick=e=>{const t=e.target.closest('[data-a]');if(!t)return;
     if(t.dataset.a==='tm')setT(tempo-5);if(t.dataset.a==='tp')setT(tempo+5);
     if(t.dataset.a==='start'){const us=$('#usfirst',stage);if(us)Store.set('us',us.checked);Snd.ac();
       const fresh=document.createElement('div');fresh.className='stage screen';fresh.style.setProperty('--g',g.col);stage.replaceWith(fresh);runQ(fresh)}};
 }
-function showResults(gid,idx,score,res,info){
+function showResults(gid,idx,score,res,info,gain){
   const g=GAMES[gid],node=FLAT[gid][idx],nx=FLAT[gid][idx+1];
+  Ev.hist({g:gid,id:node.id,nom:node.nom,pct:info?info.pct:Math.round(score*100)});
   const stars=score>=.95?3:score>=.75?2:score>=.5?1:0;P.set(gid,node.id,{done:stars>=1,stars,best:Math.round(score*100)});
   const pct=info?info.pct:Math.round(score*100);
   const net=res.filter(r=>r===2).length,aj=res.filter(r=>r===1).length;
   const line=info?`${info.line}.`:`${net} de ${res.length} sense ajuda${aj?` · ${aj} amb pistes o errors`:''}.`;
   const head=['Encara no','Superat','Molt bé','Impecable'][stars];
   const tips=info&&info.tips&&info.tips.length?`<p class="tip">${info.tips.join(' ')}</p>`:'';
-  const sc=screen(`<div class="stage" style="--g:${g.col}"><div class="result"><span class="kicker">${node.nom.toUpperCase()}</span><div class="bignum">${pct}%</div><div class="meter">${[1,2,3].map(s=>`<i class="${s<=stars?'on':''}"></i>`).join('')}</div><h2>${head}</h2><p class="ltext">${line}</p>${!info?`<div class="pips" style="width:min(360px,100%)">${res.map(r=>`<i class="pip ${r===2?'net':r===1?'aj':'no'}"></i>`).join('')}</div>`:''}${tips}${stars===0?'<p class="ltext">Per obrir l\'etapa següent cal arribar al 50%. Torna-hi: cada vegada surt diferent.</p>':''}
+  const sc=screen(`<div class="stage" style="--g:${g.col}"><div class="result"><span class="kicker">${node.nom.toUpperCase()}</span><div class="bignum">${pct}%</div><div class="meter">${[1,2,3].map(s=>`<i class="${s<=stars?'on':''}"></i>`).join('')}</div><h2>${head}</h2><p class="ltext">${line}${gain?` <span class="gain">+${gain} punts</span>`:''}</p>${!info?`<div class="pips" style="width:min(360px,100%)">${res.map(r=>`<i class="pip ${r===2?'net':r===1?'aj':'no'}"></i>`).join('')}</div>`:''}${tips}${stars===0?'<p class="ltext">Per obrir l\'etapa següent cal arribar al 50%. Torna-hi: cada vegada surt diferent.</p>':''}
     <div class="actions"><button class="btn ${stars&&nx?'ghost':'acc big'}" data-act="again">Torna-hi</button>${stars&&nx?`<button class="btn acc big" data-act="next">${nx.nom} →</button>`:''}<button class="btn ghost" data-act="map">Temes</button></div></div></div>`);
   if(stars)Snd.ok();
   sc.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act;
@@ -1354,11 +1555,12 @@ function runFree(gid){
 }
 
 /* ================= arrencada ================= */
-function route(){const h=(location.hash||'').slice(1);if(GAMES[h])renderMap(h);else renderHome()}
+function route(){const h=(location.hash||'').slice(1);if(GAMES[h])renderMap(h);else if(h==='perfil')renderProfile();else renderHome()}
 window.addEventListener('hashchange',route);
 $('#home-btn').onclick=()=>{if(location.hash==='#inici')renderHome();else location.hash='inici'};
 const sb=$('#snd');sb.addEventListener('click',()=>{Snd.on=!Snd.on;sb.setAttribute('aria-pressed',Snd.on);sb.textContent=Snd.on?'♪ So':'♪ Sense so';if(!Snd.on&&bandStop)bandStop()});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!/BUTTON|SELECT|INPUT/.test(e.target.tagName)){const b=$('[data-a=next],[data-act=cont]:not(:disabled)',app);if(b)b.click()}});
+$('#pts-btn').onclick=()=>{location.hash='perfil'};ptsBar(0);
 route();
 </script>
 
