@@ -1389,11 +1389,11 @@ function buildStage(host,onPick,info){
   /* instruments */
   const groups={};
   function mkGuitar(col,bass){
-    const g=new T.Group(),k=bass?1.08:1;const sh=new T.Shape();
-    sh.moveTo(0,-.25*k);sh.bezierCurveTo(.23*k,-.25*k,.25*k,-.04*k,.14*k,.03*k);sh.bezierCurveTo(.21*k,.11*k,.2*k,.23*k,.09*k,.25*k);sh.lineTo(-.06*k,.2*k);sh.bezierCurveTo(-.14*k,.3*k,-.24*k,.16*k,-.14*k,.03*k);sh.bezierCurveTo(-.25*k,-.04*k,-.23*k,-.25*k,0,-.25*k);
+    const g=new T.Group(),k=bass?1.08:1,X=.82*k,Y=k;const sh=new T.Shape();
+    sh.moveTo(0,-.25*Y);sh.bezierCurveTo(.24*X,-.25*Y,.26*X,-.03*Y,.13*X,.03*Y);sh.bezierCurveTo(.2*X,.1*Y,.24*X,.25*Y,.17*X,.3*Y);sh.bezierCurveTo(.12*X,.27*Y,.07*X,.19*Y,.04*X,.2*Y);sh.lineTo(-.04*X,.2*Y);sh.bezierCurveTo(-.07*X,.24*Y,-.12*X,.33*Y,-.18*X,.27*Y);sh.bezierCurveTo(-.24*X,.2*Y,-.21*X,.09*Y,-.13*X,.03*Y);sh.bezierCurveTo(-.26*X,-.03*Y,-.24*X,-.25*Y,0,-.25*Y);
     const body=add(g,new T.ExtrudeGeometry(sh,{depth:.06,bevelEnabled:true,bevelThickness:.014,bevelSize:.014,bevelSegments:3,curveSegments:28}),M(col,.28,.15));body.position.z=-.03;
     const nl=bass?.95:.66,neckY=.22*k+nl/2;
-    add(g,new T.BoxGeometry(.055,nl,.035),M(0xc89a63,.5),0,neckY,.02);add(g,new T.BoxGeometry(.05,nl,.008),M(0x2a1a10,.6),0,neckY,.042);
+    add(g,new T.BoxGeometry(.065,nl,.04),M(0xc89a63,.5),0,neckY,.02);add(g,new T.BoxGeometry(.06,nl,.008),M(0x2a1a10,.6),0,neckY,.044);
     add(g,new T.BoxGeometry(.1,.18,.028),M(0x1a1a1a,.5),0,.22*k+nl+.09,.02);
     add(g,new T.BoxGeometry(.11,.035,.02),black,0,-.12,.05);add(g,new T.BoxGeometry(.09,.03,.02),black,0,-.01,.05);if(!bass)add(g,new T.BoxGeometry(.09,.03,.02),black,0,.08,.05);
     const ns=bass?4:6;for(let i=0;i<ns;i++){const x=(i-(ns-1)/2)*(bass?.011:.008);add(g,new T.BoxGeometry(.0025,nl+.36*k,.002),chrome,x,(-.12+.22*k+nl)/2+.01,.05,false)}
@@ -1434,13 +1434,13 @@ function buildStage(host,onPick,info){
   function mkAmp(w,h,d){const g=new T.Group();const gr=tex(256,256,(c,W,H)=>{c.fillStyle='#1d1b19';c.fillRect(0,0,W,H);c.strokeStyle='rgba(255,255,255,.07)';for(let i=0;i<W;i+=6){c.beginPath();c.moveTo(i,0);c.lineTo(i,H);c.stroke();c.beginPath();c.moveTo(0,i);c.lineTo(W,i);c.stroke()}c.fillStyle='#FFC012';c.fillRect(W*.35,H*.08,W*.3,H*.07)});
     const mats=[black,black,M(0x222,.5),black,M(0xffffff,.8,0,{map:gr}),black];add(g,new T.BoxGeometry(w,h,d),mats,0,h/2,0);return g}
   const place=(gid,obj,x,z,ry,labelY)=>{obj.position.set(x,0,z);obj.rotation.y=ry;scene.add(obj);obj.traverse(o=>{o.userData.gid=gid});groups[gid]={obj,labelY}};
-  place('bateria',mkDrums(),0,-2.3,0,2.15);
-  place('guitarra',mkGuitar(0xe8a800,false),-2.35,.9,.28,2.5);
-  const ampG=mkAmp(.78,.62,.38);ampG.position.set(-1.35,0,-.35);ampG.rotation.y=.2;scene.add(ampG);ampG.traverse(o=>o.userData.gid='guitarra');
-  place('baix',mkGuitar(0x1fa597,true),2.3,.9,-.28,2.85);
-  const ampB=mkAmp(.66,.95,.46);ampB.position.set(1.35,0,-.45);ampB.rotation.y=-.2;scene.add(ampB);ampB.traverse(o=>o.userData.gid='baix');
-  place('teclat',mkKeys(),3.75,-1.6,-.42,1.45);
-  place('dictat',mkStand(),-3.9,-1.4,.42,1.75);
+  {const d=mkDrums();d.scale.setScalar(1.3);place('bateria',d,0,-1.9,0,0)}
+  place('guitarra',mkGuitar(0xe8a800,false),-2.45,1.1,.28,0);
+  const ampG=mkAmp(.78,.62,.38);ampG.position.set(-1.75,0,-1.15);ampG.rotation.y=.2;scene.add(ampG);ampG.traverse(o=>o.userData.gid='guitarra');
+  place('baix',mkGuitar(0x1fa597,true),2.45,1.1,-.28,0);
+  const ampB=mkAmp(.66,.95,.46);ampB.position.set(1.8,0,-1.2);ampB.rotation.y=-.2;scene.add(ampB);ampB.traverse(o=>o.userData.gid='baix');
+  {const k=mkKeys();k.scale.setScalar(1.35);place('teclat',k,4.05,-1.0,-.45,0)}
+  {const m=mkStand();m.scale.setScalar(1.45);place('dictat',m,-4.1,-.9,.42,0)}
   /* focus */
   const spots={};Object.entries(groups).forEach(([gid,{obj}])=>{const s=new T.SpotLight(0xfff1d6,1.3,22,.34,.55,1.1);s.position.set(obj.position.x*.9,6.2,obj.position.z+3);s.target=obj;s.castShadow=true;s.shadow.mapSize.set(1024,1024);s.shadow.bias=-.0004;scene.add(s);scene.add(s.target);spots[gid]=s});
   /* etiquetes */
@@ -1459,7 +1459,7 @@ function buildStage(host,onPick,info){
   const frame=()=>{raf=requestAnimationFrame(frame);const t=(performance.now()-t0)/1000;
     const sway=reduce?0:Math.sin(t*.12)*.5;cam.position.set(sway+ptr.x*1.2,3.7-ptr.y*.5,10.8);cam.lookAt(0,1.15,-.8);
     Object.entries(groups).forEach(([gid,gr])=>{const on=hover===gid,s=spots[gid];s.intensity+=((on?3.4:hover?.75:1.35)-s.intensity)*.15;
-      v.set(gr.obj.position.x,gr.labelY,gr.obj.position.z).project(cam);gr.el.style.transform=`translate(${(v.x*.5+.5)*W()}px,${(-v.y*.5+.5)*H()}px) translate(-50%,-100%)`;gr.el.classList.toggle('on',on)});
+      v.set(gr.obj.position.x,0,gr.obj.position.z+(gid==='bateria'?1.9:.75)).project(cam);gr.el.style.transform=`translate(${(v.x*.5+.5)*W()}px,${(-v.y*.5+.5)*H()}px) translate(-50%,-30%)`;gr.el.classList.toggle('on',on)});
     renderer.render(scene,cam)};
   frame();
   const rs=()=>{renderer.setSize(W(),H());cam.aspect=W()/H();cam.updateProjectionMatrix()};window.addEventListener('resize',rs);
