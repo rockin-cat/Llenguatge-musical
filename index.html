@@ -354,7 +354,7 @@ const Snd={
     const c=this.ctx,sr=c.sampleRate,f=440*2**((midi-69)/12),N=Math.max(2,Math.round(sr/f)),len=Math.floor(sr*dur);
     const b=c.createBuffer(1,len,sr),d=b.getChannelData(0);
     for(let i=0;i<N;i++)d[i]=Math.random()*2-1;
-    for(let i=N;i<len;i++)d[i]=damp*.5*(d[i-N]+d[i-N-1]);
+    d[N]=d[0];for(let i=N+1;i<len;i++)d[i]=damp*.5*(d[i-N]+d[i-N-1]);
     return b;
   },
   buf(midi,bass){const k=midi+(bass?'b':'g');if(!this.cache[k])this.cache[k]=this.ks(midi,bass?2.2:1.8,bass?.998:.996);return this.cache[k]},
