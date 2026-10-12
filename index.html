@@ -1390,7 +1390,7 @@ function buildStage(host,onPick,info){
   const groups={};
   function mkGuitar(col,bass){
     const g=new T.Group(),k=bass?1.08:1,X=.82*k,Y=k;const sh=new T.Shape();
-    sh.moveTo(0,-.25*Y);sh.bezierCurveTo(.24*X,-.25*Y,.26*X,-.03*Y,.13*X,.03*Y);sh.bezierCurveTo(.2*X,.1*Y,.24*X,.25*Y,.17*X,.3*Y);sh.bezierCurveTo(.12*X,.27*Y,.07*X,.19*Y,.04*X,.2*Y);sh.lineTo(-.04*X,.2*Y);sh.bezierCurveTo(-.07*X,.24*Y,-.12*X,.33*Y,-.18*X,.27*Y);sh.bezierCurveTo(-.24*X,.2*Y,-.21*X,.09*Y,-.13*X,.03*Y);sh.bezierCurveTo(-.26*X,-.03*Y,-.24*X,-.25*Y,0,-.25*Y);
+    sh.moveTo(0,-.25*Y);sh.bezierCurveTo(.24*X,-.25*Y,.26*X,-.03*Y,.13*X,.03*Y);sh.bezierCurveTo(.2*X,.09*Y,.22*X,.2*Y,.16*X,.24*Y);sh.bezierCurveTo(.12*X,.23*Y,.07*X,.18*Y,.04*X,.2*Y);sh.lineTo(-.04*X,.2*Y);sh.bezierCurveTo(-.07*X,.22*Y,-.12*X,.27*Y,-.17*X,.23*Y);sh.bezierCurveTo(-.23*X,.18*Y,-.21*X,.09*Y,-.13*X,.03*Y);sh.bezierCurveTo(-.26*X,-.03*Y,-.24*X,-.25*Y,0,-.25*Y);
     const body=add(g,new T.ExtrudeGeometry(sh,{depth:.06,bevelEnabled:true,bevelThickness:.014,bevelSize:.014,bevelSegments:3,curveSegments:28}),M(col,.28,.15));body.position.z=-.03;
     const nl=bass?.95:.66,neckY=.22*k+nl/2;
     add(g,new T.BoxGeometry(.065,nl,.04),M(0xc89a63,.5),0,neckY,.02);add(g,new T.BoxGeometry(.06,nl,.008),M(0x2a1a10,.6),0,neckY,.044);
@@ -1457,9 +1457,9 @@ function buildStage(host,onPick,info){
   cv.addEventListener('click',e=>{const g=pickAt(e);if(g)onPick(g)});
   const v=new T.Vector3();
   const frame=()=>{raf=requestAnimationFrame(frame);const t=(performance.now()-t0)/1000;
-    const sway=reduce?0:Math.sin(t*.12)*.5;cam.position.set(sway+ptr.x*1.2,3.7-ptr.y*.5,10.8);cam.lookAt(0,1.15,-.8);
+    const sway=reduce?0:Math.sin(t*.12)*.5;const fit=Math.max(1,1.75/(W()/H()));cam.position.set(sway+ptr.x*1.2,3.7*fit-ptr.y*.5,10.8*fit);cam.lookAt(0,1.15,-.8);
     Object.entries(groups).forEach(([gid,gr])=>{const on=hover===gid,s=spots[gid];s.intensity+=((on?3.4:hover?.75:1.35)-s.intensity)*.15;
-      v.set(gr.obj.position.x,0,gr.obj.position.z+(gid==='bateria'?1.9:.75)).project(cam);gr.el.style.transform=`translate(${(v.x*.5+.5)*W()}px,${(-v.y*.5+.5)*H()}px) translate(-50%,-30%)`;gr.el.classList.toggle('on',on)});
+      v.set(gr.obj.position.x,0,gr.obj.position.z+(gid==='bateria'?1.9:.75)).project(cam);const lw=gr.el.offsetWidth/2+8,lx=Math.min(W()-lw,Math.max(lw,(v.x*.5+.5)*W()));gr.el.style.transform=`translate(${lx}px,${(-v.y*.5+.5)*H()}px) translate(-50%,-30%)`;gr.el.classList.toggle('on',on)});
     renderer.render(scene,cam)};
   frame();
   const rs=()=>{renderer.setSize(W(),H());cam.aspect=W()/H();cam.updateProjectionMatrix()};window.addEventListener('resize',rs);
