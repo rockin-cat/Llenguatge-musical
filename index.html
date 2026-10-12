@@ -218,7 +218,7 @@ select{border:1.5px solid var(--line);background:var(--surface);border-radius:8p
 
 /* teclat */
 .kbwrap{overflow-x:auto;padding-bottom:4px}
-.kb{position:relative;display:flex;height:11rem;min-width:30rem;user-select:none}
+.kb{position:relative;display:flex;height:11rem;min-width:46rem;user-select:none}
 .wk{flex:1;border:1.5px solid var(--keyline);border-left-width:0;background:var(--wkey);color:var(--wkey-ink);border-radius:0 0 7px 7px;position:relative;padding:0 0 8px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;font-size:.72rem;font-weight:700;box-shadow:inset 0 -5px 0 rgba(0,0,0,.05)}
 .wk:first-child{border-left-width:1.5px}
 .bk{position:absolute;top:0;height:62%;background:var(--bkey);color:#fff;border:1.5px solid var(--bkey);border-radius:0 0 5px 5px;z-index:3;padding:0 0 6px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;font-size:.62rem;font-weight:700}
@@ -472,7 +472,7 @@ function nearPos(inst,midi,root){let best=null;for(let s=0;s<inst.tuning.length;
 
 /* ================= teclat ================= */
 class Keys{
-  constructor(host,lo=48,hi=72){
+  constructor(host,lo=36,hi=84){
     this.lo=lo;this.hi=hi;this.k={};let h='',wi=0;const whites=[];
     for(let m=lo;m<=hi;m++)if(LET_PC.includes(mod(m,12)))whites.push(m);
     const W=whites.length;
@@ -525,31 +525,47 @@ function keysVoicing(ch){const r=48+mod(ch.pc,12),third=ch.q==='min'?3:4;let v=[
 /* parts: {style, bass:fn(ci)->[4 midi] o 'root', gtr:{kind:'power'|'arp', notes:fn(ci)}, keys:fn(ci)->[midi] o 'auto'} */
 function bandPlay({bpm,prog,loops=2,parts={},onBar,onBeat,onEnd}){
   const c=Snd.ac();if(!c||!Snd.on)return 0;if(bandStop)bandStop();
-  const end=Snd.session(),timers=[],beat=60/bpm,style=parts.style||'rock';let t=c.currentTime+.15;
-  const at=(tt,fn)=>timers.push(setTimeout(fn,Math.max(0,(tt-c.currentTime)*1000)));
-  for(let i=0;i<4;i++){Snd.hat(t+i*beat,i===0?.35:.22)}
-  at(t,()=>onBeat&&onBeat(-1,-1,-1));
-  for(let i=0;i<4;i++)at(t+i*beat,()=>onBeat&&onBeat(-1,i,-1));
-  t+=4*beat;const t0=t;
-  for(let lp=0;lp<loops;lp++)prog.forEach((ch,ci)=>{
-    const bt=t0+(lp*prog.length+ci)*4*beat;
-    for(let e=0;e<8;e++){const tt=bt+e*beat/2;
-      Snd.hat(tt,style==='ballad'?(e%2?.06:.1):(e%2?.1:.17));
-      if(e===0||(style==='rock'&&(e===4||e===5))||(style==='ballad'&&e===5))Snd.kick(tt,style==='ballad'?.7:.95);
-      if(e===2||e===6)Snd.snare(tt,style==='ballad'?.28:.5)}
-    if(parts.bass==='root'){for(let e=0;e<8;e++)Snd.pluckAt(bassRoot(ch.pc),true,bt+e*beat/2,.8,beat/2*.95)}
-    else if(parts.bass){const ns=parts.bass(ci);ns.forEach((m,k)=>Snd.pluckAt(m,true,bt+k*beat,1,beat*.95))}
-    if(parts.gtr){const ns=parts.gtr.notes(ci);
-      if(parts.gtr.kind==='power')for(let e=0;e<8;e++)Snd.gtr(ns,bt+e*beat/2,e===0?beat*.9:beat/2*.6,(parts.gtr.vol||1)*(e===0?1.1:.8));
-      else{const order=[0,1,2,3,2,1,0,1];order.forEach((k,e)=>Snd.pluckAt(ns[Math.min(k,ns.length-1)],false,bt+e*beat/2,.9,1.4))}}
-    if(parts.keys){const ns=parts.keys==='auto'?keysVoicing(ch):parts.keys(ci);[0,2].forEach(b=>ns.forEach(m=>Snd.key(m,bt+b*beat,beat*2*.95,parts.keysVol||.13)))}
-    at(bt,()=>onBar&&onBar(ci,lp));
-    for(let b=0;b<4;b++)at(bt+b*beat,()=>onBeat&&onBeat(ci,b,lp));
+  const style=parts.style||'rock',beat=60/bpm,ev=[];
+  const sch=(dt,fn)=>ev.push({dt,fn});
+  /* preparem els sons de corda abans de començar */
+  const warm=new Set();
+  prog.forEach((ch,ci)=>{
+    if(parts.bass==='root')warm.add(bassRoot(ch.pc)+'b');else if(parts.bass)parts.bass(ci).forEach(m=>warm.add(m+'b'));
+    if(parts.gtr)parts.gtr.notes(ci).forEach(m=>warm.add(m+'g'));
   });
-  const total=t0+loops*prog.length*4*beat;
-  at(total+.1,()=>{bandStop=null;end();onEnd&&onEnd()});
-  bandStop=()=>{end();timers.forEach(clearTimeout);bandStop=null};
-  return (total-c.currentTime)*1000;
+  warm.forEach(k=>Snd.buf(parseInt(k),k.endsWith('b')));
+  /* esdeveniments en temps relatiu (segons des de l'inici) */
+  for(let i=0;i<4;i++)sch(i*beat,t=>Snd.hat(t,i===0?.35:.22));
+  const d0=4*beat;
+  for(let lp=0;lp<loops;lp++)prog.forEach((ch,ci)=>{
+    const bd=d0+(lp*prog.length+ci)*4*beat;
+    for(let e=0;e<8;e++){const dd=bd+e*beat/2;
+      sch(dd,t=>{Snd.hat(t,style==='ballad'?(e%2?.06:.1):(e%2?.1:.17));
+        if(e===0||(style==='rock'&&(e===4||e===5))||(style==='ballad'&&e===5))Snd.kick(t,style==='ballad'?.7:.95);
+        if(e===2||e===6)Snd.snare(t,style==='ballad'?.28:.5);
+        if(parts.bass==='root')Snd.pluckAt(bassRoot(ch.pc),true,t,.8,beat/2*.95);
+        if(parts.gtr){const ns=parts.gtr.notes(ci);
+          if(parts.gtr.kind==='power')Snd.gtr(ns,t,e===0?beat*.9:beat/2*.6,(parts.gtr.vol||1)*(e===0?1.1:.8));
+          else{const k=[0,1,2,3,2,1,0,1][e];Snd.pluckAt(ns[Math.min(k,ns.length-1)],false,t,.9,1.4)}}
+      })}
+    if(parts.bass&&parts.bass!=='root'){const ns=parts.bass(ci);ns.forEach((m,k)=>sch(bd+k*beat,t=>Snd.pluckAt(m,true,t,1,beat*.95)))}
+    if(parts.keys){const ns=parts.keys==='auto'?keysVoicing(ch):parts.keys(ci);[0,2].forEach(b=>sch(bd+b*beat,t=>ns.forEach(m=>Snd.key(m,t,beat*2*.95,parts.keysVol||.13))))}
+  });
+  ev.sort((a,b)=>a.dt-b.dt);
+  const end=Snd.session(),timers=[],t0=c.currentTime+.2;
+  const at=(dd,fn)=>timers.push(setTimeout(fn,Math.max(0,(t0+dd-c.currentTime)*1000)));
+  /* programació amb antelació curta: cada 25 ms, el que ha de sonar en els propers 0,3 s */
+  let k=0;
+  const pump=()=>{const lim=c.currentTime+.3;while(k<ev.length&&t0+ev[k].dt<lim){const tt=Math.max(t0+ev[k].dt,c.currentTime+.01);try{ev[k].fn(tt)}catch(e){}k++}};
+  pump();const iv=setInterval(pump,25);
+  at(0,()=>onBeat&&onBeat(-1,-1,-1));
+  for(let i=0;i<4;i++)at(i*beat,()=>onBeat&&onBeat(-1,i,-1));
+  for(let lp=0;lp<loops;lp++)prog.forEach((ch,ci)=>{const bd=d0+(lp*prog.length+ci)*4*beat;at(bd,()=>onBar&&onBar(ci,lp));for(let b=0;b<4;b++)at(bd+b*beat,()=>onBeat&&onBeat(ci,b,lp))});
+  const total=d0+loops*prog.length*4*beat;
+  const stop=()=>{clearInterval(iv);end();timers.forEach(clearTimeout);if(bandStop===stop)bandStop=null};
+  at(total+.6,()=>{stop();onEnd&&onEnd()});
+  bandStop=stop;
+  return (total+.2)*1000;
 }
 
 /* ================= cartes rítmiques ================= */
@@ -605,7 +621,7 @@ const S={
   }}},
   keys(title,text,o){return{title,text,run(c){
     if(o.formula)c.area.insertAdjacentHTML('beforeend',formulaHTML(o.formula));
-    const kb=new Keys(c.area,48,72),sel=new Set(o.pre||[]);
+    const kb=new Keys(c.area,36,84),sel=new Set(o.pre||[]);
     const paint=()=>{kb.reset('do');(o.marks||[]).forEach(([m,l])=>kb.mark(m,'rootk',l));if(o.ruler!==undefined){kb.ruler(o.ruler,o.rulerN||12);kb.mark(o.ruler,'',undefined,'0')}sel.forEach(m=>kb.mark(m,'sel',PC_NAME[mod(m,12)]))};
     paint();
     kb.onKey=m=>{if(c.isDone){Snd.note(m);return}
@@ -807,11 +823,11 @@ function chordOf(root,type){const T=CT[type];const notes=T.iv.map(([s,st])=>spel
 const stepsOf=T=>{const s=T.iv.map(x=>x[0]);return s.slice(1).map((v,i)=>'+'+(v-s[i]))};
 function buildKeys(host,c,onDone){
   host.insertAdjacentHTML('beforeend',`<div class="fx"></div><div class="kbx"></div><p class="say"></p><div class="actions"><button class="btn" data-b="check">Comprova</button><button class="btn ghost" data-b="hint">Pista</button><button class="btn ghost" data-b="listen">▶ Escolta</button></div>`);
-  const kb=new Keys($('.kbx',host),48,72),say=mkSay($('.say',host)),sel=new Set();let hints=0,checks=0,over=false;
+  const kb=new Keys($('.kbx',host),36,84),say=mkSay($('.say',host)),sel=new Set();let hints=0,checks=0,over=false;
   const rootM=48+c.pcs[0]+(c.pcs[0]<4?12:0);
   const paint=()=>{kb.reset('do');
-    if(hints>=2){for(let m=48;m<=72;m++)if(mod(m,12)===c.pcs[0])kb.mark(m,'rootk',nm(c.notes[0]));kb.mark(rootM,'',undefined,'0');kb.ruler(rootM,11)}
-    if(hints>=3){const have=new Set([...sel].map(x=>mod(x,12)));const i=c.pcs.findIndex((p,j)=>j>0&&!have.has(p));if(i>0)for(let m=48;m<=72;m++)if(mod(m,12)===c.pcs[i])kb.mark(m,'hintk',nm(c.notes[i]))}
+    if(hints>=2){for(let m=kb.lo;m<=kb.hi;m++)if(mod(m,12)===c.pcs[0])kb.mark(m,'rootk',nm(c.notes[0]));kb.mark(rootM,'',undefined,'0');kb.ruler(rootM,11)}
+    if(hints>=3){const have=new Set([...sel].map(x=>mod(x,12)));const i=c.pcs.findIndex((p,j)=>j>0&&!have.has(p));if(i>0)for(let m=kb.lo;m<=kb.hi;m++)if(mod(m,12)===c.pcs[i])kb.mark(m,'hintk',nm(c.notes[i]))}
     sel.forEach(m=>kb.mark(m,'sel',PC_NAME[mod(m,12)]))};
   kb.onKey=m=>{if(over){Snd.note(m);return}sel.has(m)?sel.delete(m):(sel.add(m),Snd.note(m));paint()};
   host.addEventListener('click',e=>{const t=e.target.closest('[data-b]');if(!t||over&&t.dataset.b!=='listen')return;const a=t.dataset.b;
@@ -1020,7 +1036,7 @@ function runListen(gid,idx){
   const sc=screen(hud(g,node.nom,1)+`<div class="stage" style="--g:${g.col}"><span class="kicker">TEMA ${tema.n} · ESCOLTA</span><h2>${tema.nom}</h2><p class="ltext">${node.text}</p><div class="prog">${tema.prog.map((c,i)=>`<span data-c="${i}">${c.name}</span>`).join('')}</div><div class="vis"></div>${node.legend?`<div class="legend">${node.legend}</div>`:''}<div class="actions"><button class="btn acc big" data-a="play">▶ Escolta el tema</button><span class="subq cnt"></span></div><div><p class="kicker" style="margin:0 0 8px">PER TOCAR-HO NECESSITES</p><ul class="needs">${node.needs.map((n,i)=>`<li data-n="${String(i+1).padStart(2,'0')}"><span>${n}</span></li>`).join('')}</ul></div><div class="lfoot"><button class="btn" data-act="cont" disabled>Continua →</button></div></div>`);
   const vis=$('.vis',sc),chips=$$('.prog span',sc),cnt=$('.cnt',sc),cont=$('[data-act=cont]',sc);
   let fb=null,kb=null,shapes;
-  if(tema.part==='keys'){kb=new Keys(vis,48,72);shapes=tema.prog.map(keysVoicing)}
+  if(tema.part==='keys'){kb=new Keys(vis,36,84);shapes=tema.prog.map(keysVoicing)}
   else{const inst=tema.part==='line'?BAS:GTR;fb=new Fretboard(vis,inst);const keys=tema.part==='power'?['F','5','8']:tema.keys;shapes=tema.prog.map(ch=>autoShape(inst,ch,keys));shapes.keys=keys}
   const showChord=(ci,beat)=>{chips.forEach((c,i)=>c.classList.toggle('on',i===ci));
     if(kb){kb.reset('do');shapes[ci].forEach(m=>kb.mark(m,'ex',PC_NAME[mod(m,12)]))}
@@ -1061,7 +1077,7 @@ function runJam2(gid,idx){
     const net=res.filter(Boolean).length,score=(net+(N-net)*.5)/N;
     stage.innerHTML=`<span class="kicker">TEMA ${tema.n} · AMB LA BANDA</span><h2>Ara sona el que has muntat</h2><p class="ltext">La banda toca el tema i ${isKeys?'el teclat':tema.part==='line'?'el baix':'la guitarra'} fa servir exactament les notes que has triat.</p><div class="prog">${prog.map(c=>`<span>${c.name}</span>`).join('')}</div><div class="vis"></div><div class="actions"><button class="btn acc big" data-a="play">▶ Toca amb la banda</button><button class="btn ghost" data-a="end">Acaba</button></div>`;
     const chips=$$('.prog span',stage),vis=$('.vis',stage);let fb=null,kb=null;
-    if(isKeys)kb=new Keys(vis,48,72);else fb=new Fretboard(vis,inst);
+    if(isKeys)kb=new Keys(vis,36,84);else fb=new Fretboard(vis,inst);
     const show=(ci,b)=>{chips.forEach((c,k)=>c.classList.toggle('on',k===ci));
       if(kb){kb.reset('do');user[ci].forEach(m=>kb.mark(m,'ex',PC_NAME[mod(m,12)]))}
       else{fb.clear();const pos=jamPos[ci];pos.forEach(([s,f],k)=>fb.mark(s,f,k===0?'root':'ghost',keys[k]));
@@ -1093,7 +1109,7 @@ function freeFret(stage,g){
 function freeChord(stage){
   let root={l:0,acc:0},type='maj';
   stage.insertAdjacentHTML('beforeend',`<div class="row"><label>Fonamental <select id="exroot">${ROOTS_ALL.map((r,i)=>`<option value="${i}">${nm(r)} (${nm(r,true)})</option>`).join('')}</select></label><label>Tipus <select id="extype">${Object.keys(CT).map(t=>`<option value="${t}">${CT[t].ca} (C${CT[t].us})</option>`).join('')}</select></label><button class="btn acc sm" data-a="hear">▶ Escolta</button></div><div class="prompt"></div><div class="fx"></div><div class="kbx"></div><p class="subq">Toca una tecla per canviar la fonamental. Els números blaus són els semitons des de la fonamental.</p>`);
-  const kb=new Keys($('.kbx',stage),48,72);
+  const kb=new Keys($('.kbx',stage),36,84);
   const ms=()=>{const c=chordOf(root,type),base=48+pcOf(root);return c.T.iv.map(([s])=>base+s)};
   const draw=()=>{const c=chordOf(root,type);kb.reset('do');const m=ms();kb.ruler(m[0],m[m.length-1]-m[0]);kb.mark(m[0],'',undefined,'0');m.forEach((x,i)=>kb.mark(x,'ex',nm(c.notes[i])));
     $('.prompt',stage).innerHTML=`<b>${c.ca}</b> <span class="subq">(${c.us})</span>`;
